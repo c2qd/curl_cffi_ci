@@ -129,7 +129,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "r${{ env.REV }}" \
-            --title "r$${{ env.REV }}: ${{ env.CURL_IMPERSONATE_VERSION }}+${{ env.CURL_CFFI_VERSION }}" \
+            --title "r${{ env.REV }}: ${{ env.CURL_IMPERSONATE_VERSION }}+${{ env.CURL_CFFI_VERSION }}" \
             --generate-notes \
             release-assets/curl-impersonate/openbsd-artifacts/*.tar.gz \
             release-assets/curl_cffi/dist/*.whl
