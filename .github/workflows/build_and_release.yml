@@ -130,7 +130,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "r$REV" \
-            --title "r$REV: $VERSION"
+            --title "r$REV: $VERSION" \
             --generate-notes \
-            release-assets/*.tar.gz \
-            release-assets/*.whl
+            release-assets/curl-impersonate/openbsd-artifacts/*.tar.gz \
+            release-assets/curl_cffi/dist/*.whl
