@@ -16,12 +16,12 @@
 +    },
 +    {
 +        "system": "OpenBSD",
-+        "machine": "aarch64",
++        "machine": "arm64",
 +        "pointer_size": 64,
 +        "sysname": "openbsd",
 +        "link_type": "static",
 +        "obj_name": "libcurl-impersonate.a",
-+        "arch": "aarch64"
++        "arch": "arm64"
      }
  ]
 
