@@ -1,0 +1,43 @@
+--- libs.json.orig
++++ libs.json
+@@ -146,5 +146,23 @@
+         "libc": "gnu",
+         "obj_name": "libcurl-impersonate.a",
+         "arch": "loongarch64"
++    },
++    {
++        "system": "OpenBSD",
++        "machine": "amd64",
++        "pointer_size": 64,
++        "sysname": "openbsd",
++        "link_type": "static",
++        "obj_name": "libcurl-impersonate.a",
++        "arch": "x86_64"
++    },
++    {
++        "system": "OpenBSD",
++        "machine": "aarch64",
++        "pointer_size": 64,
++        "sysname": "openbsd",
++        "link_type": "static",
++        "obj_name": "libcurl-impersonate.a",
++        "arch": "aarch64"
+     }
+ ]
+
+--- scripts/build.py.orig
++++ scripts/build.py
+@@ -206,6 +206,13 @@ if is_static:
+             static_libs[0],
+             "-Wl,--no-whole-archive",
+         ]
++    elif system == "OpenBSD":
++        extra_link_args = [
++            "-Wl,--whole-archive",
++            static_libs[0],
++            "-Wl,--no-whole-archive",
++            "-lc++",
++        ]
+ 
+ libraries = get_curl_libraries()
+ 

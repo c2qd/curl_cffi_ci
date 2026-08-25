@@ -1,0 +1,108 @@
+name: "Build on OpenBSD"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-openbsd:
+    name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - vm_arch: x86_64
+            host_label: x86_64-openbsd
+            release_only: false
+          - vm_arch: aarch64
+            host_label: aarch64-openbsd
+            release_only: false
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Build in OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: "7.9"
+          arch: ${{ matrix.vm_arch }}
+          prepare: |
+            pkg_add -Uu
+            pkg_add git cmake ninja gmake python%3 py3-setuptools py3-wheel py3-build py3-cffi py3-certifi
+          run: |
+            set -e
+            export curl_impersonate_v=2.1.1
+            export curl_cffi_v=0.16.2
+            git clone https://github.com/lexiforest/curl-impersonate
+            cd curl-impersonate
+            git checkout tags/$curl_impersonate_v
+            install_dir="$PWD/openbsd-install"
+            artifacts_dir="$PWD/openbsd-artifacts"
+            rm -rf build-openbsd "$install_dir" "$artifacts_dir"
+            mkdir -p "$install_dir" "$artifacts_dir"
+
+            patch < ../curl-impersonate.patch
+            cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir"
+            gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+            gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+
+            v="$(build-openbsd/deps/build/curl/src/curl-impersonate -V)"
+            echo "$v"
+            echo "$v" | grep -q zlib
+            echo "$v" | grep -q zstd
+            echo "$v" | grep -q brotli
+            echo "$v" | grep -q nghttp2
+            echo "$v" | grep -q BoringSSL
+
+            gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+
+            install_lib_dir="$install_dir/lib"
+            deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
+
+            cp "$deps_lib_dir/libz.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libzstd.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libbrotlidec.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libbrotlicommon.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libbrotlienc.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libnghttp2.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libnghttp3.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libngtcp2.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libngtcp2_crypto_boringssl.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libssl.a" "$install_lib_dir/"
+            cp "$deps_lib_dir/libcrypto.a" "$install_lib_dir/"
+
+            cd "$install_lib_dir"
+            mv libcurl-impersonate.a libcurl-impersonate.orig.a
+            cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive \
+              libcurl-impersonate.orig.a libz.a libzstd.a \
+              libbrotlidec.a libbrotlicommon.a libbrotlienc.a \
+              libnghttp2.a libnghttp3.a libngtcp2.a \
+              libngtcp2_crypto_boringssl.a libssl.a libcrypto.a \
+              -Wl,--no-whole-archive
+            ar rcs libcurl-impersonate.a libcurl-impersonate.full.o
+            rm -f libcurl-impersonate.full.o
+            rm -f libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a
+            rm -f libcurl-impersonate.orig.a
+
+            tar -czf "$artifacts_dir/libcurl-impersonate-$curl_impersonate_v.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include
+            cd "$install_dir/bin"
+            tar -czf "$artifacts_dir/curl-impersonate-$curl_impersonate_v.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
+
+            cd ../../..
+            git clone https://github.com/lexiforest/curl_cffi
+            cd curl_cffi
+            git checkout tags/$curl_cffi_v
+            patch < ../curl_cffi.patch
+            env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w --no-isolation
+
+      - name: Upload OpenBSD artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifacts.${{ matrix.host_label }}
+          path: |
+            curl-impersonate/openbsd-artifacts/*.tar.gz
+            curl_cffi/dist/*.whl
