@@ -7,6 +7,12 @@ on:
 permissions:
   contents: read
 
+env:
+  REV: 1
+  CURL_IMPERSONATE_VERSION: 2.1.1
+  CURL_CFFI_VERSION: 0.16.2
+  VERSION: 2.11.1+0.16.2
+
 jobs:
   build-openbsd:
     name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi
@@ -35,11 +41,9 @@ jobs:
             pkg_add git cmake ninja gmake python%3 py3-setuptools py3-wheel py3-build py3-cffi
           run: |
             set -e
-            export curl_impersonate_v=2.1.1
-            export curl_cffi_v=0.16.2
             git clone https://github.com/lexiforest/curl-impersonate
             cd curl-impersonate
-            git checkout tags/v$curl_impersonate_v
+            git checkout tags/v$CURL_IMPERSONATE_VERSION
             install_dir="$PWD/openbsd-install"
             artifacts_dir="$PWD/openbsd-artifacts"
             rm -rf build-openbsd "$install_dir" "$artifacts_dir"
@@ -95,7 +99,7 @@ jobs:
             cd ../../..
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
-            git checkout tags/v$curl_cffi_v
+            git checkout tags/v$CURL_CFFI_VERSION
             patch < ../curl_cffi.patch
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w --no-isolation
 
@@ -125,7 +129,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${{ env.VERSION }}" \
+          gh release create "r$REV" \
+            --title "r$REV: $VERSION"
             --generate-notes \
             release-assets/*.tar.gz \
             release-assets/*.whl
