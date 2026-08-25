@@ -3,10 +3,16 @@
 ## これはなに
 
 curl-impersonate & curl_cffiをOpenBSD(CI)でビルドする。  
-動くんですか？さぁ...。
-
+動くんですか？さぁ...。  
 ref:  
 https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml
+
+## 使う
+解凍するのみ。  
+curl_cffiにつきましては:
+```sh
+doas pkg_add python%3 py3-cffi py3-certifi
+```
 
 ## Credits
 [curl-impersonate](https://github.com/lexiforest/curl-impersonate): [MIT License](https://github.com/lexiforest/curl-impersonate/blob/main/LICENSE)  
