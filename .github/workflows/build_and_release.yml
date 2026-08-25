@@ -39,7 +39,7 @@ jobs:
             export curl_cffi_v=0.16.2
             git clone https://github.com/lexiforest/curl-impersonate
             cd curl-impersonate
-            git checkout tags/$curl_impersonate_v
+            git checkout tags/v$curl_impersonate_v
             install_dir="$PWD/openbsd-install"
             artifacts_dir="$PWD/openbsd-artifacts"
             rm -rf build-openbsd "$install_dir" "$artifacts_dir"
@@ -95,7 +95,7 @@ jobs:
             cd ../../..
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
-            git checkout tags/$curl_cffi_v
+            git checkout tags/v$curl_cffi_v
             patch < ../curl_cffi.patch
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w --no-isolation
 
