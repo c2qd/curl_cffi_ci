@@ -91,9 +91,9 @@ jobs:
             rm -f libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a
             rm -f libcurl-impersonate.orig.a
 
-            tar -czf "$artifacts_dir/libcurl-impersonate-$curl_impersonate_v.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include
+            tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include
             cd "$install_dir/bin"
-            tar -czf "$artifacts_dir/curl-impersonate-$curl_impersonate_v.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
+            tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
 
             cd ../../..
             git clone https://github.com/lexiforest/curl_cffi
