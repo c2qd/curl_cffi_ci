@@ -34,6 +34,7 @@ jobs:
         uses: vmactions/openbsd-vm@v1
         with:
           release: "7.9"
+          mem: 8192
           arch: ${{ matrix.vm_arch }}
           prepare: |
             pkg_add -Uu
@@ -102,7 +103,7 @@ jobs:
             patch < ../curl_cffi.patch
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w --no-isolation
 
-      - name: Upload OpenBSD artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: artifacts.${{ matrix.host_label }}
@@ -117,6 +118,9 @@ jobs:
       contents: write
 
     steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
