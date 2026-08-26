@@ -21,7 +21,7 @@
 +        "sysname": "openbsd",
 +        "link_type": "static",
 +        "obj_name": "libcurl-impersonate.a",
-+        "arch": "arm64"
++        "arch": "aarch64"
      }
  ]
 
