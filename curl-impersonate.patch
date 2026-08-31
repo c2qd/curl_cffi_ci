@@ -1,6 +1,6 @@
 --- CMakeLists.txt.orig
 +++ CMakeLists.txt
-@@ -75,8 +75,20 @@ option(USE_LIBIDN2 "Build and use libidn2/libunistring for IDN support" ${_use_l
+@@ -75,8 +75,18 @@
  option(CURL_SUBPROJECT_FORCE_OPENSSL_PATHS
    "Pass explicit OPENSSL_* paths to the curl subproject"
    ON)
@@ -10,8 +10,6 @@
 +  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 +    set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "c++abi" CACHE STRING
 +      "C++ runtime library used to link static BoringSSL")
-+    set(CURL_IMPERSONATE_EXTRA_LINKER_FLAGS "-pthread" CACHE STRING
-+      "Extra linker flags used to link static BoringSSL")
 +  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 +    set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "estdc++" CACHE STRING
 +      "C++ runtime library used to link static BoringSSL")
@@ -23,7 +21,7 @@
  set(CURL_CA_BUNDLE "" CACHE STRING "CA bundle for curl ('auto', 'none', or full path)")
  set(CURL_CA_PATH "" CACHE STRING "CA directory for curl ('auto', 'none', or full path)")
  
-@@ -503,13 +515,17 @@ endif()
+@@ -503,13 +513,17 @@
  if(CMAKE_MSVC_RUNTIME_LIBRARY)
    list(APPEND _curl_platform_flags "-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}")
  endif()
@@ -36,8 +34,8 @@
    string(APPEND _curl_exe_linker_flags " -Wl,--no-as-needed -l${CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY} -Wl,--as-needed")
    string(APPEND _curl_shared_linker_flags " -Wl,--no-as-needed -l${CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY} -Wl,--as-needed")
 +  if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-+    string(APPEND _curl_exe_linker_flags " ${CURL_IMPERSONATE_EXTRA_LINKER_FLAGS}")
-+    string(APPEND _curl_shared_linker_flags " ${CURL_IMPERSONATE_EXTRA_LINKER_FLAGS}")
++    string(APPEND _curl_exe_linker_flags " -pthread")
++    string(APPEND _curl_shared_linker_flags " -pthread")
 +  endif()
    string(STRIP "${_curl_exe_linker_flags}" _curl_exe_linker_flags)
    string(STRIP "${_curl_shared_linker_flags}" _curl_shared_linker_flags)
