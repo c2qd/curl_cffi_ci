@@ -22,9 +22,11 @@ jobs:
         include:
           - vm_arch: x86_64
             host_label: x86_64-openbsd
+            platform_tag: amd64
             release_only: false
           - vm_arch: aarch64
             host_label: aarch64-openbsd
+            platform_tag: aarch64
             release_only: false
     steps:
       - name: Check out the repo
@@ -38,7 +40,7 @@ jobs:
           arch: ${{ matrix.vm_arch }}
           prepare: |
             pkg_add -Uu
-            pkg_add git cmake ninja gmake python%3 py3-build
+            pkg_add git cmake ninja gmake python%3 py3-build py3-wheel
           run: |
             set -e
             git clone https://github.com/lexiforest/curl-impersonate
@@ -102,6 +104,8 @@ jobs:
             cd curl_cffi-${{ env.CURL_CFFI_VERSION }}
             patch < ../curl_cffi.patch
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
+            # Compat with -current
+            python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
