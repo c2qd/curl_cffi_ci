@@ -8,9 +8,9 @@ permissions:
   contents: read
 
 env:
-  REV: 1
-  CURL_IMPERSONATE_VERSION: 2.1.1
-  CURL_CFFI_VERSION: 0.16.2
+  REV: 2
+  CURL_IMPERSONATE_VERSION: 2.2.2
+  CURL_CFFI_VERSION: 0.16.3b1
 
 jobs:
   build-openbsd:
