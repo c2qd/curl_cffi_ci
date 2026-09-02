@@ -13,8 +13,8 @@ env:
   CURL_CFFI_VERSION: 0.16.3b1
 
 jobs:
-  build-openbsd:
-    name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi
+  build-test:
+    name: (${{ matrix.host_label }}) Build and test curl-impersonate / curl_cffi
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -98,7 +98,7 @@ jobs:
             rm -f libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a
             rm -f libcurl-impersonate.orig.a
 
-            tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include LICENSE*
+            tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD
 
             cd "$install_dir/bin"
             tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
@@ -132,7 +132,7 @@ jobs:
             curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
   release:
     name: Create GitHub Release
-    needs: build-openbsd
+    needs: build-test
     runs-on: ubuntu-latest
     permissions:
       contents: write
