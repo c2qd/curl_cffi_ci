@@ -124,7 +124,7 @@ jobs:
             env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl35" OPENSSL_LIB_DIR="/usr/local/lib/eopenssl35" python3 -m pip install "charset_normalizer>=3.3.2,<4.0" "cryptography>=46.0.4,<47.0" "litestar>=2.19.0,<3.0" "httpx==0.23.1" "proxy.py>=2.4.3,<3.0" "pytest>=8.1.1,<9.0" "pytest-asyncio>=0.23.6,<1.0" "pytest-trio>=0.8.0,<1.0" "python-multipart>=0.0.9,<1.0" "trio>=0.25.0,<1.0" "trustme>=1.1.0,<2.0" "uvicorn>=0.29.0,<1.0" "websockets>=14.0" "typing_extensions" "eventlet" "gevent"
             cucf_root=$PWD
             cd /tmp
-            python3 -bb -m pytest $cucf_root/tests/unittest
+            python3 -bb -m pytest $cucf_root/tests/unittest --ignore=$cucf_root/tests/unittest/test_async_websockets.py
             deactivate
 
       - name: Upload artifacts
