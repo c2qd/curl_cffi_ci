@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  REV: 4
+  REV: 3
   CURL_IMPERSONATE_VERSION: 2.2.2
   CURL_CFFI_VERSION: 0.16.3
 
@@ -41,7 +41,10 @@ jobs:
           arch: ${{ matrix.vm_arch }}
           prepare: |
             pkg_add -Uu
-            pkg_add git cmake ninja gmake python%3 rust openssl%3.5 gsed
+            pkg_add git cmake ninja gmake python%3
+            if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
+              pkg_add rust openssl%3.5 gsed
+            fi
           run: |
             set -e
             git clone https://github.com/lexiforest/curl-impersonate
@@ -111,16 +114,17 @@ jobs:
             python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
             deactivate
 
-            python3 -m venv .testvenv
-            . .testvenv/bin/activate
-            python3 -m pip install --upgrade pip
-            python3 -m pip install dist/*.whl
-            env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl35" OPENSSL_LIB_DIR="/usr/local/lib/eopenssl35" python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
-            cucf_root=$PWD
-            cd /tmp
-            python3 -bb -m pytest $cucf_root/tests/unittest --ignore=$cucf_root/tests/unittest/test_async_websockets.py
-            deactivate
-
+            if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
+              python3 -m venv .testvenv
+              . .testvenv/bin/activate
+              python3 -m pip install --upgrade pip
+              python3 -m pip install dist/*.whl
+              env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl35" OPENSSL_LIB_DIR="/usr/local/lib/eopenssl35" python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
+              cucf_root=$PWD
+              cd /tmp
+              python3 -bb -m pytest $cucf_root/tests/unittest --ignore=$cucf_root/tests/unittest/test_async_websockets.py
+              deactivate
+            fi
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
