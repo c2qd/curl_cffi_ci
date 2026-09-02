@@ -1,4 +1,4 @@
-name: "Build and test on OpenBSD"
+name: "Build and test on OpenBSD 2"
 
 on:
   workflow_call:
