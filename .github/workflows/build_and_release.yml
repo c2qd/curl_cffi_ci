@@ -58,12 +58,9 @@ jobs:
             gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
 
             v="$(build-openbsd/deps/build/curl/src/curl-impersonate -V)"
-            echo "$v"
-            echo "$v" | grep -q zlib
-            echo "$v" | grep -q zstd
-            echo "$v" | grep -q brotli
-            echo "$v" | grep -q nghttp2
-            echo "$v" | grep -q BoringSSL
+            for feature in zlib zstd brotli nghttp2 BoringSSL; do
+              echo "$v" | grep -q "$feature"
+            done
 
             gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
 
