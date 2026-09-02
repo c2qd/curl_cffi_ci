@@ -9,7 +9,7 @@ https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build
 ## Notes
 
 I occasionally run the amd64 build through yt-dlp, and I have also run the arm64 build on real hardware once.  
-However, I have absolutely no idea whether riscv64 or sparc64 actually work.  
+However, I have absolutely no idea whether riscv64actually work.  
 That's why I tried adding pytest unit tests, although the way I've set it up is admittedly quite ad hoc.
 
 ## Use
