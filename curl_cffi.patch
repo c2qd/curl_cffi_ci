@@ -1,6 +1,6 @@
 --- libs.json.orig
 +++ libs.json
-@@ -146,5 +146,41 @@
+@@ -146,5 +146,32 @@
          "libc": "gnu",
          "obj_name": "libcurl-impersonate.a",
          "arch": "loongarch64"
@@ -31,15 +31,6 @@
 +        "link_type": "static",
 +        "obj_name": "libcurl-impersonate.a",
 +        "arch": "riscv64"
-+    },
-+    {
-+        "system": "OpenBSD",
-+        "machine": "sparc64",
-+        "pointer_size": 64,
-+        "sysname": "openbsd",
-+        "link_type": "static",
-+        "obj_name": "libcurl-impersonate.a",
-+        "arch": "sparc64"
      }
  ]
 --- scripts/build.py.orig

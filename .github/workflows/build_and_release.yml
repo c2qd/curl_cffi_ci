@@ -29,9 +29,6 @@ jobs:
           - vm_arch: riscv64
             host_label: riscv64-openbsd
             platform_tag: riscv64
-          - vm_arch: sparc64
-            host_label: sparc64-openbsd
-            platform_tag: sparc64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v7
@@ -57,10 +54,6 @@ jobs:
 
             patch < ../curl-impersonate.patch
             cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir"
-            if [ "${{ matrix.vm_arch }}" = "sparc64" ]; then
-              # Remove when switched to 8.0 (maybe)
-              cmake_args="$cmake_args -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
-            fi
             gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
             gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
 
