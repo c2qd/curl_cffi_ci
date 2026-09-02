@@ -6,6 +6,12 @@ Build curl-impersonate & curl_cffi on OpenBSD (CI)
 ref:  
 https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml
 
+## Notes
+
+I occasionally run the amd64 build through yt-dlp, and I have also run the arm64 build on real hardware once.  
+However, I have absolutely no idea whether riscv64 or sparc64 actually work.  
+That's why I tried adding pytest unit tests, although the way I've set it up is admittedly quite ad hoc.
+
 ## Use
 
 Example: curl_cffi with yt-dlp
