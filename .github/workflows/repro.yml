@@ -60,4 +60,5 @@ jobs:
             cd /tmp
             python3 -bb -m pytest ${curl_cffi_root}/tests/unittest
             curl-cffi doctor
+            python3 -m pip freeze
             deactivate
