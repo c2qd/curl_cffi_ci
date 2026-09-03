@@ -131,7 +131,7 @@ jobs:
           name: artifacts.${{ matrix.host_label }}
           path: |
             curl-impersonate/openbsd-artifacts/*.tar.gz
-            curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
+            curl_cffi/dist/*.whl
   release:
     name: Create GitHub Release
     needs: build-test
