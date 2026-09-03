@@ -24,6 +24,10 @@ python3 -m pip install cffi certifi yt-dlp
 python3 -m pip install ./example.whl
 ```
 
+## Related
+
+[openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org](https://codeberg.org/c2qd/openbsd_ports/src/branch/main/www)
+
 ## Credits
 
 [curl-impersonate](https://github.com/lexiforest/curl-impersonate): [MIT License](https://github.com/lexiforest/curl-impersonate/blob/main/LICENSE)  

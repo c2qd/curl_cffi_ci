@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-test:
-    name: (${{ matrix.host_label }}) Build and test curl-impersonate / curl_cffi
+    name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi & test curl_cffi (x86_64 only)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -45,6 +45,7 @@ jobs:
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
+              # Test dependencies
               pkg_add rust openssl%${{ env.OPENSSL_MAJOR }}.${{ env.OPENSSL_MINOR }}
             fi
           run: |
@@ -100,9 +101,20 @@ jobs:
             python3 -m pip install build wheel
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
             # Compat with -current
+            # OpenBSD has no manylinux-style ABI floor tag; sysconfig.get_platform()
+            # embeds the exact release version the wheel was built on, and wheel
+            # tags are matched by exact string. -current always identifies as a
+            # version ahead of the latest release, so a wheel tagged with the
+            # release it was built on will never match -current. Re-tag with the
+            # next release's version so the wheel keeps installing on -current
+            # until that release actually ships (then repeat for the release after)
+            # That said, there's no guarantee that a wheel built on -release will 
+            # actually work on -current
             python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
             deactivate
 
+            # Tests are x86_64-only: arm64/riscv64 lack hardware virtualization support,
+            # so building the required Python libraries for testing takes far too long
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
               python3 -m venv .testvenv
               . .testvenv/bin/activate
