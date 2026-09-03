@@ -11,6 +11,8 @@ env:
   REV: 3
   CURL_IMPERSONATE_VERSION: 2.2.2
   CURL_CFFI_VERSION: 0.16.3
+  OPENSSL_MAJOR: 3
+  OPENSSL_MINOR: 5
 
 jobs:
   build-test:
@@ -43,7 +45,7 @@ jobs:
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
-              pkg_add rust openssl%3.5 gsed
+              pkg_add rust openssl%${{ env.OPENSSL_MAJOR }}.${{ env.OPENSSL_MINOR }}
             fi
           run: |
             set -e
@@ -70,30 +72,17 @@ jobs:
             install_lib_dir="$install_dir/lib"
             deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
 
-            cp "$deps_lib_dir/libz.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libzstd.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libbrotlidec.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libbrotlicommon.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libbrotlienc.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libnghttp2.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libnghttp3.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libngtcp2.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libngtcp2_crypto_boringssl.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libssl.a" "$install_lib_dir/"
-            cp "$deps_lib_dir/libcrypto.a" "$install_lib_dir/"
+            deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+
+            for lib in $deps_libs; do
+              cp "$deps_lib_dir/$lib" "$install_lib_dir/"
+            done
 
             cd "$install_lib_dir"
             mv libcurl-impersonate.a libcurl-impersonate.orig.a
-            cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive \
-              libcurl-impersonate.orig.a libz.a libzstd.a \
-              libbrotlidec.a libbrotlicommon.a libbrotlienc.a \
-              libnghttp2.a libnghttp3.a libngtcp2.a \
-              libngtcp2_crypto_boringssl.a libssl.a libcrypto.a \
-              -Wl,--no-whole-archive
+            cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive libcurl-impersonate.orig.a $deps_libs -Wl,--no-whole-archive
             ar rcs libcurl-impersonate.a libcurl-impersonate.full.o
-            rm -f libcurl-impersonate.full.o
-            rm -f libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a
-            rm -f libcurl-impersonate.orig.a
+            rm -f libcurl-impersonate.full.o $deps_libs libcurl-impersonate.orig.a
 
             tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD
 
@@ -119,12 +108,15 @@ jobs:
               . .testvenv/bin/activate
               python3 -m pip install --upgrade pip
               python3 -m pip install dist/*.whl
-              env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl35" OPENSSL_LIB_DIR="/usr/local/lib/eopenssl35" python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
+              env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl${{ env.OPENSSL_MAJOR }}${{ env.OPENSSL_MINOR }}" \
+                  OPENSSL_LIB_DIR="/usr/local/lib/eopenssl${{ env.OPENSSL_MAJOR }}${{ env.OPENSSL_MINOR }}" \
+                  python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
               cucf_root=$PWD
-              cd /tmp
+              cd
               python3 -bb -m pytest $cucf_root/tests/unittest --ignore=$cucf_root/tests/unittest/test_async_websockets.py
               deactivate
             fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
