@@ -1,31 +1,16 @@
 --- CMakeLists.txt.orig
 +++ CMakeLists.txt
-@@ -75,8 +75,22 @@ option(USE_LIBIDN2 "Build and use libidn2/libunistring for IDN support" ${_use_l
- option(CURL_SUBPROJECT_FORCE_OPENSSL_PATHS
-   "Pass explicit OPENSSL_* paths to the curl subproject"
+@@ -77,6 +77,9 @@ option(CURL_SUBPROJECT_FORCE_OPENSSL_PATHS
    ON)
--set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "stdc++" CACHE STRING
--  "C++ runtime library used to link static BoringSSL")
-+if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-+    set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "c++abi;pthread" CACHE STRING
-+      "C++ runtime library used to link static BoringSSL")
-+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-+    set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "estdc++" CACHE STRING
-+      "C++ runtime library used to link static BoringSSL")
-+  endif()
-+else()
-+  set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "stdc++" CACHE STRING
-+    "C++ runtime library used to link static BoringSSL")
-+endif()
-+
+ set(CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "stdc++" CACHE STRING
+   "C++ runtime library used to link static BoringSSL")
 +list(TRANSFORM CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY PREPEND "-l")
 +string(REPLACE ";" " " CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY "${CURL_IMPERSONATE_CXX_RUNTIME_LIBRARY}")
 +
  set(CURL_CA_BUNDLE "" CACHE STRING "CA bundle for curl ('auto', 'none', or full path)")
  set(CURL_CA_PATH "" CACHE STRING "CA directory for curl ('auto', 'none', or full path)")
 
-@@ -506,13 +520,13 @@ endif()
+@@ -506,13 +509,13 @@ endif()
  if(CMAKE_MSVC_RUNTIME_LIBRARY)
    list(APPEND _curl_platform_flags "-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}")
  endif()
