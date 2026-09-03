@@ -8,9 +8,9 @@ https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build
 
 ## Notes
 
-I occasionally run the amd64 build through yt-dlp, and I have also run the arm64 build on real hardware once.  
-However, I have absolutely no idea whether riscv64actually work.  
-That's why I tried adding pytest unit tests, although the way I've set it up is admittedly quite ad hoc.
+x86_64 should work, and aarch64 probably works as well. I don't know whether riscv64 works.  
+I haven't verified whether it works on -current, as the CI uses release versions of OpenBSD.  
+If it doesn't work on -current, it might be worth trying this: [openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org](https://codeberg.org/c2qd/openbsd_ports/src/branch/main/www)
 
 ## Use
 
@@ -23,10 +23,6 @@ python3 -m venv .venv
 python3 -m pip install cffi certifi yt-dlp
 python3 -m pip install ./example.whl
 ```
-
-## Related
-
-[openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org](https://codeberg.org/c2qd/openbsd_ports/src/branch/main/www)
 
 ## Credits
 
