@@ -1,0 +1,83 @@
+name: "Build maturin and cryptography"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUST_OPENSSL_MATURIN_VERSION: 0.9.116
+  RUST_OPENSSL_CRYPTOGRAPHY_VERSION: 0.9.110
+
+jobs:
+  build-test:
+    name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi & test curl_cffi (x86_64 only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: "7.9"
+          mem: 8192
+          arch: x86_64
+          prepare: |
+            pkg_add -Uu
+            pkg_add git python%3 rust
+            fi
+          run: |
+            set -e
+            for ver in ${{ env.RUST_OPENSSL_MATURIN_VERSION }} ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}; do
+              cd ${{ github.workspace }}
+              git clone https://github.com/rust-openssl/rust-openssl.git rust-openssl-$ver
+              cd rust-openssl-$ver
+              git checkout tags/openssl-sys-v$ver
+              # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
+              ed -s openssl-sys/build/main.rs << 'EOF'
+            /_ => version_error/-1
+            .t.
+            s/(.*=/_ =
+            +1d
+            w
+            q
+            EOF
+            done
+
+            mkdir -p "${{ env.RUNNER_TEMP }}/.cargo_maturin" "${{ env.RUNNER_TEMP }}/.cargo_cryptography"
+            cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_maturin/config.toml"
+            [patch.crates-io]
+            openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_MATURIN_VERSION }}/openssl-sys", package = "openssl-sys" }
+            EOF
+            cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_cryptography/config.toml"
+            [patch.crates-io]
+            openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}/openssl-sys", package = "openssl-sys" }
+            EOF
+
+            cd ${{ github.workspace }}
+            python3 -m venv .venv
+            . .venv/bin/activate
+            python3 -m pip install --upgrade pip
+            python3 -m pip install wheel build
+            python3 -m pip download --no-binary maturin --no-binary cryptography maturin "cryptography>=46.0.4,<47.0"
+            tar xzf maturin-*.tar.gz
+            tar xzf cryptography-*.tar.gz
+            rm maturin-*.tar.gz cryptography-*.tar.gz
+            mv maturin-* maturin
+            cd maturin
+            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update
+            python3 -m pip wheel . -w .
+            python3 -m pip install maturin*.whl
+            cd ${{ github.workspace }}
+            mv cryptography-* cryptography
+            cd cryptography
+            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml
+            python3 -m build --wheel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifacts
+          path: |
+            maturin/*.whl
+            cryptography/dist/*.whl
