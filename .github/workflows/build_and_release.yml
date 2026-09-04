@@ -117,8 +117,10 @@ jobs:
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
+              cd ${{ github.workspace }}
               gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts
               python3 -m pip install maturin/*.whl cryptography/dist/wheel/*.whl
+              cd ${{ github.workspace }}/curl_cffi
               python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
               cd
               python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
