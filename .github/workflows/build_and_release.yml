@@ -102,7 +102,7 @@ jobs:
             python3 -m venv .buildvenv
             . .buildvenv/bin/activate
             python3 -m pip install --upgrade pip
-            python3 -m pip install build wheel cffi
+            python3 -m pip install build $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
             # Compat with -current
             # OpenBSD has no manylinux-style ABI floor tag; sysconfig.get_platform()
@@ -144,6 +144,12 @@ jobs:
             [patch.crates-io]
             openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}/openssl-sys", package = "openssl-sys" }
             EOF
+              rm -rf maturin*
+              python3 -m pip download --no-binary maturin maturin
+              tar xzf maturin-*.tar.gz
+              cd maturin-*
+              env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update
+              python3 -m pip install .
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
               . .testvenv/bin/activate
