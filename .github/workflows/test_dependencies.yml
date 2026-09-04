@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi & test curl_cffi (x86_64 only)
+    name: Build maturin and cryptography
     runs-on: ubuntu-latest
     steps:
       - name: Build on OpenBSD
@@ -63,15 +63,14 @@ jobs:
             tar xzf cryptography-*.tar.gz
             rm maturin-*.tar.gz cryptography-*.tar.gz
             mv maturin-* maturin
+            mv cryptography-* cryptography
             cd maturin
             env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update
-            python3 -m pip wheel . -w .
+            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" python3 -m pip wheel . -w .
             python3 -m pip install maturin*.whl
-            cd ${{ github.workspace }}
-            mv cryptography-* cryptography
-            cd cryptography
+            cd ${{ github.workspace }}/cryptography
             env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml
-            python3 -m build --wheel
+            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" python3 -m build --wheel
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
