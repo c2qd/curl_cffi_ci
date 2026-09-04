@@ -1,7 +1,6 @@
 name: "Build and test on OpenBSD"
 
 on:
-  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -42,15 +41,8 @@ jobs:
           mem: 8192
           arch: ${{ matrix.vm_arch }}
           prepare: |
-            if [ "${{ matrix.vm_arch }}" = "aarch64" ] || [ "${{ matrix.vm_arch }}" = "riscv64" ];then
-              false
-            fi
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3
-            if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
-              # Test dependency
-              pkg_add rust
-            fi
           run: |
             set -e
             git clone https://github.com/lexiforest/curl-impersonate
@@ -120,50 +112,15 @@ jobs:
             # Tests are x86_64-only: arm64/riscv64 lack hardware virtualization support,
             # so building the required Python libraries for testing takes far too long
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
-            for ver in ${{ env.RUST_OPENSSL_MATURIN_VERSION }} ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}; do
-              cd ${{ github.workspace }}
-                git clone https://github.com/rust-openssl/rust-openssl.git rust-openssl-$ver
-                cd rust-openssl-$ver
-                git checkout tags/openssl-sys-v$ver
-                # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
-                ed -s openssl-sys/build/main.rs << 'EOF'
-            /_ => version_error/-1
-            .t.
-            s/(.*=/_ =
-            +1d
-            w
-            q
-            EOF
-              done
-              mkdir -p "${{ env.RUNNER_TEMP }}/.cargo_maturin" "${{ env.RUNNER_TEMP }}/.cargo_cryptography"
-              cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_maturin/config.toml"
-            [patch.crates-io]
-            openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_MATURIN_VERSION }}/openssl-sys", package = "openssl-sys" }
-            EOF
-              cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_cryptography/config.toml"
-            [patch.crates-io]
-            openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}/openssl-sys", package = "openssl-sys" }
-            EOF
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
-              . .testvenv/bin/activate
-              python3 -m pip install --upgrade pip
-              python3 -m pip install dist/*.whl
-              cd ${{ github.workspace }}
-              rm -rf maturin*
-              python3 -m pip download --no-binary maturin maturin
-              tar xzf maturin-*.tar.gz
-              rm maturin-*.tar.gz
-              cd maturin-*
-              env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update
-              python3 -m pip install .
-              cd ${{ github.workspace }}/curl_cffi
-              env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
+              gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts
+              python3 -m pip install maturin/*.whl cryptography/dist/wheel/*.whl
+              python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
               cd
               python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
               deactivate
             fi
-            false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
