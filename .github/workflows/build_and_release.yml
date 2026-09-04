@@ -11,7 +11,8 @@ env:
   REV: 3
   CURL_IMPERSONATE_VERSION: 2.2.2
   CURL_CFFI_VERSION: 0.16.3
-  RUST_OPENSSL_VERSION: 0.9.110
+  RUST_OPENSSL_MATURIN_VERSION: 0.9.116
+  RUST_OPENSSL_CRYPTOGRAPHY_VERSION: 0.9.110
 
 jobs:
   build-test:
@@ -119,12 +120,13 @@ jobs:
             # Tests are x86_64-only: arm64/riscv64 lack hardware virtualization support,
             # so building the required Python libraries for testing takes far too long
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
+            for ver in ${{ env.RUST_OPENSSL_MATURIN_VERSION }} ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}; do
               cd ${{ github.workspace }}
-              git clone https://github.com/rust-openssl/rust-openssl.git
-              cd rust-openssl
-              git checkout tags/openssl-sys-v${{ env.RUST_OPENSSL_VERSION }}
-              # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
-              ed -s openssl-sys/build/main.rs << 'EOF'
+                git clone https://github.com/rust-openssl/rust-openssl.git rust-openssl-$ver
+                cd rust-openssl-$ver
+                git checkout tags/openssl-sys-v$ver
+                # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
+                ed -s openssl-sys/build/main.rs << 'EOF'
             /_ => version_error/-1
             .t.
             s/(.*=/_ =
@@ -132,11 +134,13 @@ jobs:
             w
             q
             EOF
+              done
               export CARGO_HOME="${{ env.HOME }}/.cargo"
               mkdir -p "$CARGO_HOME"
               cat << 'EOF' >> "$CARGO_HOME/config.toml"
             [patch.crates-io]
-            openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
+            openssl-sys-maturin = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_MATURIN_VERSION }}/openssl-sys", package = "openssl-sys" }
+            openssl-sys-cryptography = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}/openssl-sys", package = "openssl-sys" }
             EOF
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
