@@ -117,6 +117,7 @@ jobs:
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
+              . .testvenv/bin/activate
               cd ${{ github.workspace }}
               git config --global --add safe.directory "${{ github.workspace }}"
               gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts
