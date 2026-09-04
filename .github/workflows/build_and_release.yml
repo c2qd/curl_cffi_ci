@@ -93,7 +93,7 @@ jobs:
             cd "$install_dir/bin"
             tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
 
-            cd ${{ env.GITHUB_WORKSPACE }}
+            cd ${{ github.workspace }}
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
             git checkout tags/v${{ env.CURL_CFFI_VERSION }}
@@ -134,7 +134,6 @@ jobs:
             EOF
               export CARGO_HOME="${{ env.HOME }}/.cargo"
               mkdir -p "$CARGO_HOME"
-              echo "foo"
               cat << 'EOF' >> "$CARGO_HOME/config.toml"
             [patch.crates-io]
             openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
