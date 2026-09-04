@@ -43,12 +43,12 @@ jobs:
             EOF
             done
 
-            mkdir -p "${{ env.RUNNER_TEMP }}/.cargo_maturin" "${{ env.RUNNER_TEMP }}/.cargo_cryptography"
-            cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_maturin/config.toml"
+            mkdir -p "${{ github.workspace }}/.cargo_maturin" "${{ github.workspace }}/.cargo_cryptography"
+            cat << 'EOF' >> "${{ github.workspace }}/.cargo_maturin/config.toml"
             [patch.crates-io]
             openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_MATURIN_VERSION }}/openssl-sys", package = "openssl-sys" }
             EOF
-            cat << 'EOF' >> "${{ env.RUNNER_TEMP }}/.cargo_cryptography/config.toml"
+            cat << 'EOF' >> "${{ github.workspace }}/.cargo_cryptography/config.toml"
             [patch.crates-io]
             openssl-sys = { path = "${{ github.workspace }}/rust-openssl-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}/openssl-sys", package = "openssl-sys" }
             EOF
@@ -65,13 +65,13 @@ jobs:
             mv maturin-* maturin
             mv cryptography-* cryptography
             cd maturin
-            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update -p openssl-sys --precise ${{ env.RUST_OPENSSL_MATURIN_VERSION }}
-            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" python3 -m pip wheel . -w .
+            env CARGO_HOME="${{ github.workspace }}/.cargo_maturin" cargo update -p openssl-sys --precise ${{ env.RUST_OPENSSL_MATURIN_VERSION }}
+            env CARGO_HOME="${{ github.workspace }}/.cargo_maturin" python3 -m pip wheel . -w .
             python3 -m pip install maturin*.whl
-            rm -rf "${{ env.RUNNER_TEMP }}/.cargo_maturin"
+            rm -rf "${{ github.workspace }}/.cargo_maturin"
             cd ${{ github.workspace }}/cryptography
-            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml -p openssl-sys --precise ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}
-            env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_cryptography" python3 -m build --wheel
+            env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml -p openssl-sys --precise ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}
+            env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" python3 -m build --wheel
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
