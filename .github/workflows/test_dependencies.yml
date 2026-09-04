@@ -12,7 +12,7 @@ env:
   RUST_OPENSSL_CRYPTOGRAPHY_VERSION: 0.9.110
 
 jobs:
-  build-test:
+  build:
     name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi & test curl_cffi (x86_64 only)
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +25,6 @@ jobs:
           prepare: |
             pkg_add -Uu
             pkg_add git python%3 rust
-            fi
           run: |
             set -e
             for ver in ${{ env.RUST_OPENSSL_MATURIN_VERSION }} ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}; do
