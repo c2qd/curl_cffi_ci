@@ -52,9 +52,6 @@ jobs:
             fi
           run: |
             set -e
-            cd ${{ github.workspace }}
-            pwd
-            ls -la
             git clone https://github.com/lexiforest/curl-impersonate
             cd curl-impersonate
             git checkout tags/v${{ env.CURL_IMPERSONATE_VERSION }}
@@ -137,7 +134,7 @@ jobs:
               EOF
               export CARGO_HOME="${{ env.HOME }}/.cargo"
               mkdir -p "$CARGO_HOME"
-              cat < 'EOF' >> "$CARGO_HOME/config.toml"
+              cat << 'EOF' >> "$CARGO_HOME/config.toml"
               [patch.crates-io]
               openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
               EOF
