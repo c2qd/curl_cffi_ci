@@ -17,6 +17,8 @@ jobs:
   build-test:
     name: (${{ matrix.host_label }}) Build curl-impersonate / curl_cffi & test curl_cffi (x86_64 only)
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     strategy:
       fail-fast: false
       matrix:
@@ -40,9 +42,10 @@ jobs:
           release: "7.9"
           mem: 8192
           arch: ${{ matrix.vm_arch }}
+          envs: "GH_TOKEN"
           prepare: |
             pkg_add -Uu
-            pkg_add git cmake ninja gmake python%3
+            pkg_add git cmake ninja gmake python%3 github-cli
           run: |
             set -e
             git clone https://github.com/lexiforest/curl-impersonate
