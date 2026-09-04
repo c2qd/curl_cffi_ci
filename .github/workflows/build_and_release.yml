@@ -11,6 +11,7 @@ env:
   REV: 3
   CURL_IMPERSONATE_VERSION: 2.2.2
   CURL_CFFI_VERSION: 0.16.3
+  RUST_OPENSSL_VERSION: 0.9.110
   OPENSSL_MAJOR: 3
   OPENSSL_MINOR: 5
 
@@ -45,8 +46,8 @@ jobs:
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
-              # Test dependencies
-              pkg_add rust openssl%${{ env.OPENSSL_MAJOR }}.${{ env.OPENSSL_MINOR }}
+              # Test dependency
+              pkg_add rust
             fi
           run: |
             set -e
@@ -91,7 +92,7 @@ jobs:
             cd "$install_dir/bin"
             tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
 
-            cd ../../..
+            cd ${{ env.GITHUB_WORKSPACE }}
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
             git checkout tags/v${{ env.CURL_CFFI_VERSION }}
@@ -109,7 +110,7 @@ jobs:
             # release it was built on will never match -current. Re-tag with the
             # next release's version so the wheel keeps installing on -current
             # until that release actually ships (then repeat for the release after)
-            # That said, there's no guarantee that a wheel built on -release will 
+            # That said, there's no guarantee that a wheel built on -release will
             # actually work on -current
             python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
             deactivate
@@ -117,16 +118,33 @@ jobs:
             # Tests are x86_64-only: arm64/riscv64 lack hardware virtualization support,
             # so building the required Python libraries for testing takes far too long
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
+              cd ${{ github.workspace }}
+              git clone https://github.com/rust-openssl/rust-openssl.git
+              cd rust-openssl
+              git checkout tags/openssl-sys-v${{ env.RUST_OPENSSL_VERSION }}
+              # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
+              ed -s openssl-sys/build/main.rs <<-EOF
+              /_ => version_error/-1
+              .t.
+              s/(.*=/_ =
+              +1d
+              w
+              q
+              EOF
+              export CARGO_HOME="${{ env.HOME }}/.cargo"
+              mkdir -p "$CARGO_HOME"
+              cat < 'EOF' >> "$CARGO_HOME/config.toml"
+              [patch.crates-io]
+              openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
+              EOF
+              cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
               . .testvenv/bin/activate
               python3 -m pip install --upgrade pip
               python3 -m pip install dist/*.whl
-              env OPENSSL_INCLUDE_DIR="/usr/local/include/eopenssl${{ env.OPENSSL_MAJOR }}${{ env.OPENSSL_MINOR }}" \
-                  OPENSSL_LIB_DIR="/usr/local/lib/eopenssl${{ env.OPENSSL_MAJOR }}${{ env.OPENSSL_MINOR }}" \
-                  python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
-              cucf_root=$PWD
+              python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
               cd
-              python3 -bb -m pytest $cucf_root/tests/unittest --ignore=$cucf_root/tests/unittest/test_async_websockets.py
+              python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
               deactivate
             fi
 

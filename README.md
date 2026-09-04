@@ -4,7 +4,8 @@
 
 Build curl-impersonate & curl_cffi on OpenBSD (CI)  
 ref:  
-https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml
+https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml  
+https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
 
 ## Notes
 
