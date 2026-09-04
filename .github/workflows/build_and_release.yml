@@ -102,7 +102,7 @@ jobs:
             python3 -m venv .buildvenv
             . .buildvenv/bin/activate
             python3 -m pip install --upgrade pip
-            python3 -m pip install -e '.[build-system]'
+            python3 -m pip install build wheel cffi
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
             # Compat with -current
             # OpenBSD has no manylinux-style ABI floor tag; sysconfig.get_platform()
