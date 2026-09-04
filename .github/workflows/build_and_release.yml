@@ -124,21 +124,21 @@ jobs:
               cd rust-openssl
               git checkout tags/openssl-sys-v${{ env.RUST_OPENSSL_VERSION }}
               # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
-              ed -s openssl-sys/build/main.rs <<-EOF
-              /_ => version_error/-1
-              .t.
-              s/(.*=/_ =
-              +1d
-              w
-              q
-              EOF
+              ed -s openssl-sys/build/main.rs << 'EOF'
+            /_ => version_error/-1
+            .t.
+            s/(.*=/_ =
+            +1d
+            w
+            q
+            EOF
               export CARGO_HOME="${{ env.HOME }}/.cargo"
               mkdir -p "$CARGO_HOME"
               echo "foo"
-              cat <<-EOF >> "$CARGO_HOME/config.toml"
-              [patch.crates-io]
-              openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
-              EOF
+              cat << 'EOF' >> "$CARGO_HOME/config.toml"
+            [patch.crates-io]
+            openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
+            EOF
               cd ${{ github.workspace }}/curl_cffi
               python3 -m venv .testvenv
               . .testvenv/bin/activate
