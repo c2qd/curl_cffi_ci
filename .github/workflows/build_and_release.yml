@@ -41,6 +41,9 @@ jobs:
           mem: 8192
           arch: ${{ matrix.vm_arch }}
           prepare: |
+            if [ "${{ matrix.vm_arch }}" = "aarch64" ] || [ "${{ matrix.vm_arch }}" = "riscv64" ];then
+              false
+            fi
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3
             if [ "${{ matrix.vm_arch }}" = "x86_64" ]; then
