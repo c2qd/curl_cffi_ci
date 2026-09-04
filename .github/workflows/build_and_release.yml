@@ -147,6 +147,7 @@ jobs:
               python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
               deactivate
             fi
+            false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
