@@ -153,6 +153,7 @@ jobs:
               rm -rf maturin*
               python3 -m pip download --no-binary maturin maturin
               tar xzf maturin-*.tar.gz
+              rm maturin-*.tar.gz
               cd maturin-*
               env CARGO_HOME="${{ env.RUNNER_TEMP }}/.cargo_maturin" cargo update
               python3 -m pip install .
