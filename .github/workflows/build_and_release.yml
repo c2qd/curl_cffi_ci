@@ -134,7 +134,8 @@ jobs:
               EOF
               export CARGO_HOME="${{ env.HOME }}/.cargo"
               mkdir -p "$CARGO_HOME"
-              cat << 'EOF' >> "$CARGO_HOME/config.toml"
+              echo "foo"
+              cat <<-EOF >> "$CARGO_HOME/config.toml"
               [patch.crates-io]
               openssl-sys = { path = "${{ github.workspace }}/rust-openssl/openssl-sys" }
               EOF
