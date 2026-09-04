@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 env:
-  RUST_OPENSSL_MATURIN_VERSION: 0.9.116
-  RUST_OPENSSL_CRYPTOGRAPHY_VERSION: 0.9.110
+  MATURIN_OPENSSL_SYS_VERSION: 0.9.116
+  CRYPTOGRAPHY_OPENSSL_SYS_VERSION: 0.9.110
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
             pkg_add python%3 rust
           run: |
             set -e
-            for ver in ${{ env.RUST_OPENSSL_MATURIN_VERSION }} ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}; do
+            for ver in ${{ env.MATURIN_OPENSSL_SYS_VERSION }} ${{ env.CRYPTOGRAPHY_OPENSSL_SYS_VERSION }}; do
               cd ${{ github.workspace }}
               ftp https://static.crates.io/crates/openssl-sys/openssl-sys-$ver.crate
               tar xzf openssl-sys-$ver.crate
@@ -45,11 +45,11 @@ jobs:
             mkdir -p "${{ github.workspace }}/.cargo_maturin" "${{ github.workspace }}/.cargo_cryptography"
             cat << 'EOF' >> "${{ github.workspace }}/.cargo_maturin/config.toml"
             [patch.crates-io]
-            openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.RUST_OPENSSL_MATURIN_VERSION }}", package = "openssl-sys" }
+            openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.MATURIN_OPENSSL_SYS_VERSION }}", package = "openssl-sys" }
             EOF
             cat << 'EOF' >> "${{ github.workspace }}/.cargo_cryptography/config.toml"
             [patch.crates-io]
-            openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}", package = "openssl-sys" }
+            openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.CRYPTOGRAPHY_OPENSSL_SYS_VERSION }}", package = "openssl-sys" }
             EOF
 
             cd ${{ github.workspace }}
@@ -64,12 +64,12 @@ jobs:
             mv maturin-* maturin
             mv cryptography-* cryptography
             cd maturin
-            env CARGO_HOME="${{ github.workspace }}/.cargo_maturin" cargo update -p openssl-sys --precise ${{ env.RUST_OPENSSL_MATURIN_VERSION }}
+            env CARGO_HOME="${{ github.workspace }}/.cargo_maturin" cargo update -p openssl-sys --precise ${{ env.MATURIN_OPENSSL_SYS_VERSION }}
             env CARGO_HOME="${{ github.workspace }}/.cargo_maturin" python3 -m pip wheel . -w .
             python3 -m pip install maturin*.whl
             rm -rf "${{ github.workspace }}/.cargo_maturin"
             cd ${{ github.workspace }}/cryptography
-            env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml -p openssl-sys --precise ${{ env.RUST_OPENSSL_CRYPTOGRAPHY_VERSION }}
+            env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" cargo update --manifest-path src/rust/Cargo.toml -p openssl-sys --precise ${{ env.CRYPTOGRAPHY_OPENSSL_SYS_VERSION }}
             env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" python3 -m build --wheel
 
       - name: Upload artifacts
