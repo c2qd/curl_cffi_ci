@@ -13,8 +13,8 @@ env:
   OPENBSD: 7.9
 
 jobs:
-  build:
-    name: Build curl-impersonate / curl_cffi on ${{ matrix.host_label }}
+  build-curlimpersonate:
+    name: Build curl-impersonate on ${{ matrix.host_label }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -41,7 +41,7 @@ jobs:
           arch: ${{ matrix.vm_arch }}
           prepare: |
             pkg_add -Uu
-            pkg_add git cmake ninja gmake python%3
+            pkg_add git cmake ninja gmake
           run: |
             set -e
             git clone https://github.com/lexiforest/curl-impersonate
@@ -77,16 +77,65 @@ jobs:
             cd "$install_dir/bin"
             tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
 
-            cd ${{ github.workspace }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: curl-impersonate.${{ matrix.host_label }}
+          path: |
+            curl-impersonate/openbsd-artifacts/*.tar.gz
+
+  build-curlcffi:
+    name: Build curl_cffi on ${{ matrix.host_label }}
+    needs: build-curlimpersonate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - vm_arch: x86_64
+            host_label: x86_64-openbsd
+            platform_tag: amd64
+          - vm_arch: aarch64
+            host_label: aarch64-openbsd
+            platform_tag: aarch64
+          - vm_arch: riscv64
+            host_label: riscv64-openbsd
+            platform_tag: riscv64
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: curl-impersonate.${{ matrix.host_label }}
+          path: release-assets
+
+      - name: Build
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ env.OPENBSD }}
+          mem: 8192
+          arch: ${{ matrix.vm_arch }}
+          envs: "GH_TOKEN"
+          prepare: |
+            pkg_add -Uu
+            pkg_add git python%3
+          run: |
+            mv release-assets/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz .
+            tar xzf curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz
+            curl_impersonate_dir=$PWD/curl-impersonate
             python3 -m venv .venv
             . .venv/bin/activate
             python3 -m pip install --upgrade pip
-            git clone https://github.com/lexiforest/curl_cffi
-            cd curl_cffi
-            git checkout tags/v${{ env.CURL_CFFI_VERSION }}
+            ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+            tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+            cd curl_cffi-${{ env.CURL_CFFI_VERSION }}
             patch < ${{ github.workspace }}/curl_cffi.patch
             python3 -m pip install build $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
-            env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
+            env CFLAGS="-I$curl_impersonate_dir/include" IMPERSONATE_BUILD_DIR="$curl_impersonate_dir/lib" python3 -m build -w
             # Compat with -current
             # There's no guarantee that a wheel built on -release will
             # actually work on -current
@@ -96,14 +145,13 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: artifacts.${{ matrix.host_label }}
+          name: curl_cffi.${{ matrix.host_label }}
           path: |
-            curl-impersonate/openbsd-artifacts/*.tar.gz
             curl_cffi/dist/*.whl
 
   test:
     name: Test curl_cffi on x86_64
-    needs: build
+    needs: build-curlcffi
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -114,9 +162,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          pattern: artifacts.x86_64-openbsd
+          pattern: curl_cffi.x86_64-openbsd
           path: release-assets
-          merge-multiple: true
 
       - name: Test
         uses: vmactions/openbsd-vm@v1
@@ -157,7 +204,9 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          pattern: artifacts.*
+          pattern: |
+            curl-impersonate.*
+            curl_cffi.*
           path: release-assets
           merge-multiple: true
 
