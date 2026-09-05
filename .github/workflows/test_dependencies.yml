@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    name: Build maturin and cryptography
+    name: Build cryptography
     runs-on: ubuntu-latest
     steps:
       - name: Build
@@ -77,5 +77,4 @@ jobs:
         with:
           name: artifacts
           path: |
-            maturin/*.whl
             cryptography/dist/*.whl
