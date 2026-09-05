@@ -32,6 +32,7 @@ jobs:
               tar xzf openssl-sys-$ver.crate
               cd openssl-sys-$ver
               # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
+              # https://github.com/rust-openssl/rust-openssl/issues/1997
               ed -s build/main.rs << 'EOF'
             /_ => version_error/-1
             .t.
