@@ -1,4 +1,4 @@
-name: "Build and test on OpenBSD"
+name: "Build and test"
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   build-curlimpersonate:
-    name: Build curl-impersonate on ${{ matrix.host_label }}
+    name: Build curl-impersonate on ${{ matrix.vm_arch }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -85,7 +85,7 @@ jobs:
             curl-impersonate/openbsd-artifacts/*.tar.gz
 
   build-curlcffi:
-    name: Build curl_cffi on ${{ matrix.host_label }}
+    name: Build curl_cffi on ${{ matrix.vm_arch }}
     needs: build-curlimpersonate
     runs-on: ubuntu-latest
     strategy:
@@ -111,7 +111,6 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           pattern: curl-impersonate.${{ matrix.host_label }}
-          path: release-assets
 
       - name: Build
         uses: vmactions/openbsd-vm@v1
@@ -124,10 +123,9 @@ jobs:
             pkg_add -Uu
             pkg_add git python%3
           run: |
-            cd release-assets
-            tar xzf libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz
-            curl_impersonate_dir=$PWD
-            cd ..
+            mkdir curl-impersonate
+            tar xzf libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz -C curl-impersonate
+            curl_impersonate_dir=$PWD/curl-impersonate
             python3 -m venv .venv
             . .venv/bin/activate
             python3 -m pip install --upgrade pip
@@ -163,8 +161,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          pattern: curl_cffi.x86_64-openbsd
-          path: release-assets
+          name: curl_cffi.x86_64-openbsd
 
       - name: Test
         uses: vmactions/openbsd-vm@v1
@@ -182,7 +179,7 @@ jobs:
             python3 -m pip install --upgrade pip
             git config --global --add safe.directory "${{ github.workspace }}"
             gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts
-            python3 -m pip install cryptography/dist/*.whl release-assets/curl_cffi/dist/*.whl
+            python3 -m pip install cryptography/dist/*.whl curl_cffi-*.whl
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
             git checkout tags/v${{ env.CURL_CFFI_VERSION }}
@@ -218,5 +215,5 @@ jobs:
           gh release create "r${{ env.REV }}" \
             --title "r${{ env.REV }}: ${{ env.CURL_IMPERSONATE_VERSION }}+${{ env.CURL_CFFI_VERSION }}" \
             --generate-notes \
-            release-assets/curl-impersonate/openbsd-artifacts/*.tar.gz \
-            release-assets/curl_cffi/dist/*.whl
+            release-assets/*.tar.gz \
+            release-assets/*.whl
