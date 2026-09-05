@@ -179,7 +179,7 @@ jobs:
             python3 -m pip install --upgrade pip
             git config --global --add safe.directory "${{ github.workspace }}"
             gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts
-            python3 -m pip install cryptography/dist/*.whl curl_cffi-*.whl
+            python3 -m pip install cryptography-*.whl curl_cffi-*.whl
             git clone https://github.com/lexiforest/curl_cffi
             cd curl_cffi
             git checkout tags/v${{ env.CURL_CFFI_VERSION }}
