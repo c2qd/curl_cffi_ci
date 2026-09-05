@@ -1,8 +1,5 @@
-.ifmake !clean
-.poison empty(CURL_IMPERSONATE_VERSION)
-.poison empty(CURL_CFFI_VERSION)
-.endif
-
+CURL_IMPERSONATE_VERSION = 2.2.2
+CURL_CFFI_VERSION = 0.16.3
 PYTHON_BIN ?= python3
 PYTHON_VENV = .venv/bin/${PYTHON_BIN}
 
