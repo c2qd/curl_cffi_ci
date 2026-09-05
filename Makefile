@@ -1,5 +1,5 @@
 .ifmake !clean
-#.poison empty(CURL_IMPERSONATE_DIR)
+.poison empty(CURL_IMPERSONATE_VERSION)
 .poison empty(CURL_CFFI_VERSION)
 .endif
 
