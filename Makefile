@@ -10,8 +10,8 @@ build: .build-curl-impersonate-done .build-curl_cffi-done
 
 .check-depends-done:
 .for pkg in cmake ninja gmake python-3
-	if ! pkg_info | grep -q ${pkg}; then \
-		echo "Please install ${pkg:S/python-/python-%/}"; \
+	@if ! pkg_info | grep -q ${pkg}; then \
+		echo "Please install ${pkg:S/python-/python%/}" && exit 1; \
 	fi
 .endfor
 	touch $@
