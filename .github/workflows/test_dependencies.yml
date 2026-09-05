@@ -1,4 +1,4 @@
-name: "Build maturin and cryptography"
+name: "Prepare dependencies for curl_cffi test"
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
     name: Build maturin and cryptography
     runs-on: ubuntu-latest
     steps:
-      - name: Build on OpenBSD
+      - name: Build
         uses: vmactions/openbsd-vm@v1
         with:
           release: "7.9"

@@ -88,14 +88,7 @@ jobs:
             python3 -m pip install build $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
             env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR=$install_lib_dir python3 -m build -w
             # Compat with -current
-            # OpenBSD has no manylinux-style ABI floor tag; sysconfig.get_platform()
-            # embeds the exact release version the wheel was built on, and wheel
-            # tags are matched by exact string. -current always identifies as a
-            # version ahead of the latest release, so a wheel tagged with the
-            # release it was built on will never match -current. Re-tag with the
-            # next release's version so the wheel keeps installing on -current
-            # until that release actually ships (then repeat for the release after)
-            # That said, there's no guarantee that a wheel built on -release will
+            # There's no guarantee that a wheel built on -release will
             # actually work on -current
             python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
             deactivate
