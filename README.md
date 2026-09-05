@@ -23,8 +23,7 @@ Example: curl_cffi with yt-dlp
 doas pkg_add python%3
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install yt-dlp
-python3 -m pip install ./file.whl
+python3 -m pip install yt-dlp /path/to/curl_cffi.whl
 ```
 
 ## Credits
