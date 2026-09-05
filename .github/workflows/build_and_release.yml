@@ -148,7 +148,7 @@ jobs:
         with:
           name: curl_cffi.${{ matrix.host_label }}
           path: |
-            curl_cffi/dist/*.whl
+            curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
 
   test:
     name: Test curl_cffi on x86_64
