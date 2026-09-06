@@ -1,12 +1,15 @@
 CURL_IMPERSONATE_VERSION = 2.2.2
 CURL_CFFI_VERSION = 0.16.3
-PYTHON_BIN ?= python3
-PYTHON_VENV = .venv/bin/${PYTHON_BIN}
+PYTHON_BIN = /usr/local/bin/python3
+PYTHON_VENV = .venv/bin/python3
+.if !defined(MAKE_JOBS)
+MAKE_JOBS !!= sysctl -n hw.ncpuonline
+.endif
 
 all: build
 check-depends: .check-depends-done
 prepare: .prepare-done
-build: .build-curl-impersonate-done .build-curl_cffi-done
+build: .build-curl_cffi-done
 
 .check-depends-done:
 .for pkg in cmake ninja gmake python-3
@@ -14,7 +17,7 @@ build: .build-curl-impersonate-done .build-curl_cffi-done
 		echo "Please install ${pkg:S/python-/python%/}" && exit 1; \
 	fi
 .endfor
-	touch $@
+	@touch $@
 
 .prepare-done: .check-depends-done
 	@ftp -V -o curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
@@ -26,13 +29,14 @@ build: .build-curl-impersonate-done .build-curl_cffi-done
 	@cd curl_cffi-${CURL_CFFI_VERSION} && \
 		patch < ../curl_cffi.patch && \
 		${PYTHON_BIN} -m venv .venv && \
+		${PYTHON_VENV} -m pip install --upgrade pip && \
 		${PYTHON_VENV} -m pip install build $$(${PYTHON_VENV} -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
 	@touch $@
 
 .build-curl-impersonate-done: prepare
 	@cd curl-impersonate-${CURL_IMPERSONATE_VERSION} && \
 		export install_dir="$${PWD}/install" && \
-		export cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$${install_dir} -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread" && \
+		export cmake_args="-DSUBJOBS=${MAKE_JOBS} -G Ninja -DCMAKE_INSTALL_PREFIX=$${install_dir} -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread" && \
 		gmake configure BUILD_DIR=build CMAKE_CONFIGURE_ARGS="$${cmake_args}" && \
 		gmake build BUILD_DIR=build CMAKE_CONFIGURE_ARGS="$${cmake_args}" && \
         gmake checkbuild BUILD_DIR=build && \
@@ -52,11 +56,13 @@ build: .build-curl-impersonate-done .build-curl_cffi-done
 		fi
 	@touch $@
 
-.build-curl_cffi-done: prepare
+.build-curl_cffi-done: .build-curl-impersonate-done
 	@export IMPERSONATE_BUILD_DIR=$$(realpath curl-impersonate-${CURL_IMPERSONATE_VERSION}/install)/lib && \
 		export CFLAGS=-I${IMPERSONATE_BUILD_DIR}/include && \
 		cd curl_cffi-${CURL_CFFI_VERSION} && \
 		${PYTHON_VENV} -m build -w
+	@echo "[Info] curl-impersonate: ${.CURDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}/install/"
+	@echo "[Info] curl_cffi: ${.CURDIR}/curl_cffi-${CURL_CFFI_VERSION}/dist/"
 	@touch $@
 
 clean:
