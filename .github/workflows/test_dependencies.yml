@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build
-        uses: vmactions/openbsd-vm@v1
+        uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
         with:
           release: "7.9"
           mem: 8192
@@ -74,7 +74,7 @@ jobs:
             env CARGO_HOME="${{ github.workspace }}/.cargo_cryptography" python3 -m build --wheel
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts
           path: |
