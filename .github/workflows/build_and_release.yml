@@ -219,6 +219,7 @@ jobs:
         run: |
           gh release create "r${{ env.REV }}" \
             --title "r${{ env.REV }}: ${{ env.CURL_IMPERSONATE_VERSION }}+${{ env.CURL_CFFI_VERSION }}" \
+            --notes "OpenBSD: ${{ env.OPENBSD }}" \
             --generate-notes \
             release-assets/*.tar.gz \
             release-assets/*.whl
