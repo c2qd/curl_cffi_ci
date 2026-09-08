@@ -62,7 +62,7 @@ jobs:
             mv cryptography-* cryptography
             cd maturin
             mkdir -p .cargo
-            cat << 'EOF' >> .cargo/config.toml"
+            cat << 'EOF' >> ".cargo/config.toml"
             [patch.crates-io]
             openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.MATURIN_OPENSSL_SYS_VERSION }}", package = "openssl-sys" }
             EOF
