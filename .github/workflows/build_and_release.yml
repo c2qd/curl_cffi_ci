@@ -55,10 +55,9 @@ jobs:
             mkdir -p "$install_dir" "$artifacts_dir"
 
             patch < ${{ github.workspace }}/curl-impersonate.patch
-            cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir"
-            cmake_args="$cmake_args -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
+            cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
             gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
-            gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+            gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args" JOBS=$(sysctl -n hw.ncpuonline)
             gmake checkbuild BUILD_DIR=build-openbsd
 
             gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
