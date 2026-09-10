@@ -110,13 +110,6 @@ jobs:
           python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
           deactivate
 
-      - name: Upload curl_cffi
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: curl_cffi.${{ matrix.host_label }}
-          path: |
-            curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
-
       - name: Test curl_cffi
         shell: openbsd {0}
         run: |
@@ -131,6 +124,13 @@ jobs:
           cd
           python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
           deactivate
+
+      - name: Upload curl_cffi
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: curl_cffi.${{ matrix.host_label }}
+          path: |
+            curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
 
   release:
     name: Create GitHub Release
