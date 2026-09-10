@@ -13,77 +13,8 @@ env:
   OPENBSD: 7.9
 
 jobs:
-  build-curlimpersonate:
-    name: Build curl-impersonate on ${{ matrix.vm_arch }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - vm_arch: x86_64
-            host_label: x86_64-openbsd
-          - vm_arch: aarch64
-            host_label: aarch64-openbsd
-          - vm_arch: riscv64
-            host_label: riscv64-openbsd
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Build
-        uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
-        with:
-          release: ${{ env.OPENBSD }}
-          mem: 8192
-          arch: ${{ matrix.vm_arch }}
-          prepare: |
-            pkg_add -Uu
-            pkg_add git cmake ninja gmake
-          run: |
-            set -e
-            git clone https://github.com/lexiforest/curl-impersonate
-            cd curl-impersonate
-            git checkout tags/v${{ env.CURL_IMPERSONATE_VERSION }}
-            install_dir="$PWD/openbsd-install"
-            artifacts_dir="$PWD/openbsd-artifacts"
-            rm -rf build-openbsd "$install_dir" "$artifacts_dir"
-            mkdir -p "$install_dir" "$artifacts_dir"
-
-            patch < ${{ github.workspace }}/curl-impersonate.patch
-            cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
-            gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
-            gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args" JOBS=$(sysctl -n hw.ncpuonline)
-            gmake checkbuild BUILD_DIR=build-openbsd
-
-            gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
-
-            install_lib_dir="$install_dir/lib"
-            deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
-            deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
-            for lib in $deps_libs; do
-              cp "$deps_lib_dir/$lib" "$install_lib_dir/"
-            done
-            cd "$install_lib_dir"
-            mv libcurl-impersonate.a libcurl-impersonate.orig.a
-            cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive libcurl-impersonate.orig.a $deps_libs -Wl,--no-whole-archive
-            ar rcs libcurl-impersonate.a libcurl-impersonate.full.o
-            rm -f libcurl-impersonate.full.o $deps_libs libcurl-impersonate.orig.a
-
-            tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* -C "$install_dir" include LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD
-            cd "$install_dir/bin"
-            tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: curl-impersonate.${{ matrix.host_label }}
-          path: |
-            curl-impersonate/openbsd-artifacts/*.tar.gz
-
-  build-curlcffi:
-    name: Build curl_cffi on ${{ matrix.vm_arch }}
-    needs: build-curlimpersonate
+  build-test:
+    name: Build and test on ${{ matrix.vm_arch }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -97,21 +28,16 @@ jobs:
           - vm_arch: riscv64
             host_label: riscv64-openbsd
             platform_tag: riscv64
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: curl-impersonate.${{ matrix.host_label }}
-
-      - name: Build
+      - name: Start VM
         uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
+        env:
+          GH_TOKEN: ${{ github.token }}
         with:
           release: ${{ env.OPENBSD }}
           mem: 8192
@@ -119,87 +45,96 @@ jobs:
           envs: "GH_TOKEN"
           prepare: |
             pkg_add -Uu
-            pkg_add git python%3
-          run: |
-            mkdir curl-impersonate
-            tar xzf libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz -C curl-impersonate
-            curl_impersonate_dir=$PWD/curl-impersonate
-            python3 -m venv .venv
-            . .venv/bin/activate
-            python3 -m pip install --upgrade pip
-            ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
-            tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
-            cd curl_cffi-${{ env.CURL_CFFI_VERSION }}
-            patch < ${{ github.workspace }}/curl_cffi.patch
-            python3 -m pip install build $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
-            env CFLAGS="-I$curl_impersonate_dir/include" IMPERSONATE_BUILD_DIR="$curl_impersonate_dir" python3 -m build -w
-            # Compat with -current
-            # There's no guarantee that a wheel built on -release will
-            # actually work on -current
-            python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
-            deactivate
+            pkg_add git cmake ninja gmake python%3 github-cli
 
-      - name: Upload artifacts
+      - name: Build curl-impersonate
+        shell: openbsd {0}
+        run: |
+          set -e
+          git clone https://github.com/lexiforest/curl-impersonate
+          cd curl-impersonate
+          git checkout tags/v${{ env.CURL_IMPERSONATE_VERSION }}
+          install_dir="$PWD/openbsd-install"
+          artifacts_dir="$PWD/openbsd-artifacts"
+          rm -rf build-openbsd "$install_dir" "$artifacts_dir"
+          mkdir -p "$install_dir" "$artifacts_dir"
+
+          patch < ${{ github.workspace }}/curl-impersonate.patch
+          cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
+          gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+          gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args" JOBS=$(sysctl -n hw.ncpuonline)
+          gmake checkbuild BUILD_DIR=build-openbsd
+          gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+
+          install_lib_dir="$install_dir/lib"
+          deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
+          deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          for lib in $deps_libs; do
+            cp "$deps_lib_dir/$lib" "$install_lib_dir/"
+          done
+          cd "$install_lib_dir"
+          mv libcurl-impersonate.a libcurl-impersonate.orig.a
+          cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive libcurl-impersonate.orig.a $deps_libs -Wl,--no-whole-archive
+          ar rcs libcurl-impersonate.a libcurl-impersonate.full.o
+          rm -f libcurl-impersonate.full.o $deps_libs libcurl-impersonate.orig.a
+
+          tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* \
+              -C "$install_dir" include LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD
+          cd "$install_dir/bin"
+          tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
+
+      - name: Upload curl-impersonate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: curl-impersonate.${{ matrix.host_label }}
+          path: |
+            curl-impersonate/openbsd-artifacts/*.tar.gz
+
+      - name: Build curl_cffi
+        shell: openbsd {0}
+        run: |
+          install_dir="$PWD/curl-impersonate/openbsd-install"
+          install_lib_dir="$install_dir/lib"
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python3 -m pip install --upgrade pip
+          ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          cd curl_cffi-${{ env.CURL_CFFI_VERSION }}
+          patch < ${{ github.workspace }}/curl_cffi.patch
+          python3 -m pip install build $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
+          env CFLAGS="-I$install_dir/include" IMPERSONATE_BUILD_DIR="$install_lib_dir" python3 -m build -w
+          # Compat with -current
+          # There's no guarantee that a wheel built on -release will
+          # actually work on -current
+          python3 -m wheel tags --platform-tag="+openbsd_8_0_${{ matrix.platform_tag }}" --remove dist/*.whl
+          deactivate
+
+      - name: Upload curl_cffi
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: curl_cffi.${{ matrix.host_label }}
           path: |
             curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl
 
-  test:
-    name: Test curl_cffi on ${{ matrix.vm_arch }}
-    needs: build-curlcffi
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - vm_arch: x86_64
-            host_label: x86_64-openbsd
-          - vm_arch: aarch64
-            host_label: aarch64-openbsd
-          - vm_arch: riscv64
-            host_label: riscv64-openbsd
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: curl_cffi.${{ matrix.host_label }}
-
-      - name: Test
-        uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
-        with:
-          release: ${{ env.OPENBSD }}
-          mem: 8192
-          arch: x86_64
-          envs: "GH_TOKEN"
-          prepare: |
-            pkg_add -Uu
-            pkg_add git python%3 github-cli
-          run: |
-            python3 -m venv .venv
-            . .venv/bin/activate
-            python3 -m pip install --upgrade pip
-            git config --global --add safe.directory "${{ github.workspace }}"
-            gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
-            python3 -m pip install cryptography-*.whl curl_cffi-*.whl
-            git clone https://github.com/lexiforest/curl_cffi
-            cd curl_cffi
-            git checkout tags/v${{ env.CURL_CFFI_VERSION }}
-            python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
-            cd
-            python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
-            deactivate
+      - name: Test curl_cffi
+        shell: openbsd {0}
+        run: |
+          . .venv/bin/activate
+          git config --global --add safe.directory "${{ github.workspace }}"
+          gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
+          python3 -m pip install cryptography-*.whl curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl
+          git clone https://github.com/lexiforest/curl_cffi
+          cd curl_cffi
+          git checkout tags/v${{ env.CURL_CFFI_VERSION }}
+          python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
+          cd
+          python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
+          deactivate
 
   release:
     name: Create GitHub Release
-    needs: test
+    needs: build-test
     runs-on: ubuntu-latest
     permissions:
       contents: write
