@@ -42,7 +42,6 @@ jobs:
           release: ${{ env.OPENBSD }}
           mem: 8192
           arch: ${{ matrix.vm_arch }}
-          envs: "GH_TOKEN"
           prepare: |
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3 github-cli
@@ -112,6 +111,8 @@ jobs:
 
       - name: Test curl_cffi
         shell: openbsd {0}
+        with:
+          envs: "GH_TOKEN"
         run: |
           . .venv/bin/activate
           git config --global --add safe.directory "${{ github.workspace }}"
