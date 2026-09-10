@@ -50,16 +50,11 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          git clone https://github.com/lexiforest/curl-impersonate
+          git clone --branch v${{ env.CURL_IMPERSONATE_VERSION }} --depth 1 https://github.com/lexiforest/curl-impersonate
           ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           git config --global --add safe.directory "${{ github.workspace }}"
           gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
           tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
-          cd curl-impersonate
-          git checkout tags/v${{ env.CURL_IMPERSONATE_VERSION }}
-          patch < ${{ github.workspace }}/curl-impersonate.patch
-          cd ../curl_cffi-${{ env.CURL_CFFI_VERSION }}
-          patch < ${{ github.workspace }}/curl_cffi.patch
 
       - name: Prepare Python environment
         shell: openbsd {0}
@@ -67,8 +62,16 @@ jobs:
           set -e
           for dir in .build_venv .test_venv; do
             python3 -m venv $dir
-            $var/bin/python3 -m pip install --upgrade pip
+            $dir/bin/python3 -m pip install --upgrade pip
           done
+
+      - name: Apply patch
+        shell: openbsd {0}
+        run: |
+          cd curl-impersonate
+          patch < ${{ github.workspace }}/curl-impersonate.patch
+          cd ../curl_cffi-${{ env.CURL_CFFI_VERSION }}
+          patch < ${{ github.workspace }}/curl_cffi.patch
 
       - name: Build curl-impersonate
         shell: openbsd {0}
@@ -132,9 +135,8 @@ jobs:
           set -e
           . .test_venv/bin/activate
           python3 -m pip install cryptography-*.whl curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl
-          git clone https://github.com/lexiforest/curl_cffi curl_cffi_test
+          git clone --branch v${{ env.CURL_CFFI_VERSION }} --depth 1 https://github.com/lexiforest/curl_cffi curl_cffi_test
           cd curl_cffi_test
-          git checkout tags/v${{ env.CURL_CFFI_VERSION }}
           python3 -m pip install $(python3 -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['optional-dependencies']['test']))")
           cd
           python3 -bb -m pytest ${{ github.workspace }}/curl_cffi/tests/unittest --ignore=${{ github.workspace }}/curl_cffi/tests/unittest/test_async_websockets.py
