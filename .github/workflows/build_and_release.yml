@@ -68,6 +68,7 @@ jobs:
       - name: Apply patch
         shell: openbsd {0}
         run: |
+          set -e
           cd curl-impersonate
           patch < ${{ github.workspace }}/curl-impersonate.patch
           cd ../curl_cffi-${{ env.CURL_CFFI_VERSION }}
