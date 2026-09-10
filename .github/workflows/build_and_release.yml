@@ -112,8 +112,6 @@ jobs:
 
       - name: Test curl_cffi
         shell: openbsd {0}
-        with:
-          envs: "GH_TOKEN"
         run: |
           set -e
           . .venv/bin/activate
