@@ -92,6 +92,7 @@ jobs:
       - name: Build curl_cffi
         shell: openbsd {0}
         run: |
+          set -e
           install_dir="$PWD/curl-impersonate/openbsd-install"
           install_lib_dir="$install_dir/lib"
           python3 -m venv .venv
@@ -114,6 +115,7 @@ jobs:
         with:
           envs: "GH_TOKEN"
         run: |
+          set -e
           . .venv/bin/activate
           git config --global --add safe.directory "${{ github.workspace }}"
           gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
