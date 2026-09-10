@@ -61,6 +61,7 @@ jobs:
             mv maturin-* maturin
             mv cryptography-* cryptography
             cd maturin
+            patch < ${{ github.workspace }}/maturin.patch
             mkdir -p .cargo
             cat << 'EOF' >> .cargo/config.toml
             [patch.crates-io]

@@ -33,5 +33,5 @@ python3 -m pip install yt-dlp /path/to/curl_cffi.whl
 
 ## License
 
-Artifacts: original source's license  
+Artifacts / maturin.patch: original source's license  
 Other files are licensed under [The Unlicense](UNLICENSE)
