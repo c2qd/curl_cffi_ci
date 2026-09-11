@@ -21,11 +21,6 @@ jobs:
           - vm_arch: aarch64
           - vm_arch: riscv64
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: Build
         uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
         with:
@@ -66,7 +61,15 @@ jobs:
             mv maturin-* maturin
             mv cryptography-* cryptography
             cd maturin
-            patch < ${{ github.workspace }}/maturin.patch
+            if [ ${{ matrix.vm_arch }} == "riscv64" ]; then
+              # https://cvsweb.openbsd.org/checkout/ports/devel/maturin/patches/patch-src_target_mod_rs?rev=1.5
+              ed -s src/target/mod.rs << 'EOF'
+            /Arch::Riscv32 | Arch::Riscv64 => "riscv"/
+            s/riscv/riscv64
+            w
+            q
+            EOF
+            fi
             mkdir -p .cargo
             cat << 'EOF' >> .cargo/config.toml
             [patch.crates-io]
