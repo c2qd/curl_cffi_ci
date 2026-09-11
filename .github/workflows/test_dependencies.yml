@@ -76,7 +76,7 @@ jobs:
             openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.MATURIN_OPENSSL_SYS_VERSION }}", package = "openssl-sys" }
             EOF
             cargo update -p openssl-sys --precise ${{ env.MATURIN_OPENSSL_SYS_VERSION }}
-            python3 -m pip wheel . -w . --no-build-isolation
+            python3 -m pip wheel . -w .
             python3 -m pip install maturin*.whl
             cd ..
             rm -rf maturin
