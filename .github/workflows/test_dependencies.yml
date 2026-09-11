@@ -64,7 +64,7 @@ jobs:
             if [ ${{ matrix.vm_arch }} == "riscv64" ]; then
               # https://cvsweb.openbsd.org/checkout/ports/devel/maturin/patches/patch-src_target_mod_rs?rev=1.5
               ed -s src/target/mod.rs << 'EOF'
-            /Arch::Riscv32 | Arch::Riscv64 => "riscv"/s/riscv/riscv64/
+            /Arch::Riscv32 | Arch::Riscv64 => "riscv"/s/riscv/riscv64
             w
             q
             EOF
