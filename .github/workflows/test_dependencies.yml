@@ -87,7 +87,8 @@ jobs:
             openssl-sys = { path = "${{ github.workspace }}/openssl-sys-${{ env.CRYPTOGRAPHY_OPENSSL_SYS_VERSION }}", package = "openssl-sys" }
             EOF
             cargo update --manifest-path src/rust/Cargo.toml -p openssl-sys --precise ${{ env.CRYPTOGRAPHY_OPENSSL_SYS_VERSION }}
-            python3 -m pip install -e .
+            python3 -m pip install . --only-deps
+            python3 -m pip install setuptools
             python3 -m build --wheel --no-isolation
 
       - name: Upload artifacts
