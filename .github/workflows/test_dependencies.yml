@@ -36,6 +36,7 @@ jobs:
               cd ${{ github.workspace }}
               ftp https://static.crates.io/crates/openssl-sys/openssl-sys-$ver.crate
               tar xzf openssl-sys-$ver.crate
+              rm -f openssl-sys-$ver.crate
               cd openssl-sys-$ver
               # https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
               # https://github.com/rust-openssl/rust-openssl/issues/1997
@@ -77,6 +78,8 @@ jobs:
             cargo update -p openssl-sys --precise ${{ env.MATURIN_OPENSSL_SYS_VERSION }}
             python3 -m pip wheel . -w .
             python3 -m pip install maturin*.whl
+            cd ..
+            rm -rf maturin
             cd ${{ github.workspace }}/cryptography
             mkdir -p .cargo
             cat << 'EOF' >> .cargo/config.toml
