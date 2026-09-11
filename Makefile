@@ -7,8 +7,10 @@ PYTHON_VENV =						.venv/bin/python3
 MAKE_JOBS !!= sysctl -n hw.ncpuonline
 .endif
 
-CURL_IMPERSONATE_DEST =				${.CURDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}
-CURL_CFFI_DEST =					${.CURDIR}/curl_cffi-${CURL_CFFI_VERSION}
+WRKDIR =							${.CURDIR}/work
+
+CURL_IMPERSONATE_DEST =				${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}
+CURL_CFFI_DEST =					${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}
 
 CURL_IMPERSONATE_BUILD_DIR ?=		${CURL_IMPERSONATE_DEST}/build
 CURL_IMPERSONATE_INSTALL_DIR ?=		${CURL_IMPERSONATE_DEST}/install
@@ -26,14 +28,20 @@ CURL_IMPERSONATE_MAKE_FLAGS +=		BUILD_DIR=${CURL_IMPERSONATE_BUILD_DIR} CMAKE_CO
 CURL_CFFI_MAKE_FLAGS +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
 
 all: build
-check-depends: .check-depends-done
-fetch: .fetch-done
-extract: .extract-done
-patch: .patch-done
-configure: .configure-done
-build: .build-curl_cffi-done
+init: ${WRKDIR}/.init-done
+check-depends: ${WRKDIR}/.check-depends-done
+prepare: ${WRKDIR}/.prepare-done
+fetch: ${WRKDIR}/.fetch-done
+extract: ${WRKDIR}/.extract-done
+patch: ${WRKDIR}/.patch-done
+configure: ${WRKDIR}/.configure-done
+build: ${WRKDIR}/.build-curl_cffi-done
 
-.check-depends-done:
+${WRKDIR}/.init-done:
+	@mkdir ${WRKDIR}
+	@touch $@
+
+${WRKDIR}/.check-depends-done: ${WRKDIR}/.init-done
 .for pkg in cmake ninja gmake python-3
 	@if ! pkg_info | grep -q ${pkg}; then \
 		echo "Please install ${pkg:S/python-/python%/} package before build" && exit 1; \
@@ -41,24 +49,24 @@ build: .build-curl_cffi-done
 .endfor
 	@touch $@
 
-.fetch-done: .check-depends-done
-	@ftp -V -o curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
-	@ftp -V https://github.com/lexiforest/curl_cffi/releases/download/v${CURL_CFFI_VERSION}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+${WRKDIR}/.fetch-done: ${WRKDIR}/.check-depends-done
+	@ftp -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
+	@ftp -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/releases/download/v${CURL_CFFI_VERSION}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
 	@touch $@
 
-.extract-done: .fetch-done
-	@tar xzf curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz
-	@tar xzf curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+${WRKDIR}/.extract-done: ${WRKDIR}/.fetch-done
+	@tar xzf ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz -C ${WRKDIR}
+	@tar xzf ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz -C ${WRKDIR}
 	@touch $@
 
-.patch-done: .extract-done
+${WRKDIR}/.patch-done: ${WRKDIR}/.extract-done
 	@cd ${CURL_IMPERSONATE_DEST} && \
-		patch < ../curl-impersonate.patch
+		patch < ${.CURDIR}/curl-impersonate.patch
 	@cd ${CURL_CFFI_DEST} && \
-		patch < ../curl_cffi.patch
+		patch < ${.CURDIR}/curl_cffi.patch
 	@touch $@
 
-.configure-done: .patch-done
+${WRKDIR}/.configure-done: ${WRKDIR}/.patch-done
 	@cd ${CURL_IMPERSONATE_DEST} && \
 		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake configure
 	@cd ${CURL_CFFI_DEST} && \
@@ -67,8 +75,8 @@ build: .build-curl_cffi-done
 		${PYTHON_VENV} -m pip install build $$(${PYTHON_VENV} -c "import tomllib; print(' '.join(tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']))")
 	@touch $@
 
-.build-curl-impersonate-done: .configure-done
-	@cd curl-impersonate-${CURL_IMPERSONATE_VERSION} && \
+${WRKDIR}/.build-curl-impersonate-done: ${WRKDIR}/.configure-done
+	@cd ${CURL_IMPERSONATE_DEST} && \
 		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake build && \
         env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake checkbuild && \
 		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake install-strip && \
@@ -84,14 +92,14 @@ build: .build-curl_cffi-done
 		fi
 	@touch $@
 
-.build-curl_cffi-done: .build-curl-impersonate-done
-	@cd curl_cffi-${CURL_CFFI_VERSION} && \
+${WRKDIR}/.build-curl_cffi-done: ${WRKDIR}/.build-curl-impersonate-done
+	@cd ${CURL_CFFI_DEST} && \
 		env ${CURL_CFFI_MAKE_FLAGS} ${PYTHON_VENV} -m build -w
 	@echo "[Info] curl-impersonate: ${CURL_IMPERSONATE_INSTALL_DIR}"
-	@echo "[Info] curl_cffi: ${.CURDIR}/curl_cffi-${CURL_CFFI_VERSION}/dist/"
+	@echo "[Info] curl_cffi: ${CURL_CFFI_DEST}/dist/"
 	@touch $@
 
 clean:
-	rm -rf curl-impersonate-* curl_cffi-* .*-done
+	rm -rf ${WRKDIR} .*-done
 
-.PHONY: all check-depends fetch extract patch configure build clean
+.PHONY: all init check-depends fetch extract patch configure build clean

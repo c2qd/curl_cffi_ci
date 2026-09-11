@@ -1,4 +1,1 @@
-*.tar.gz
-curl-impersonate-*
-curl_cffi-*
-.*-done
+work/
