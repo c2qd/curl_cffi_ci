@@ -23,9 +23,9 @@ CURL_IMPERSONATE_DEPS_LIBS =		libz.a libzstd.a libbrotlidec.a libbrotlicommon.a 
 									libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a \
 									libssl.a libcrypto.a
 
-CURL_IMPERSONATE_MAKE_FLAGS +=		BUILD_DIR=${CURL_IMPERSONATE_BUILD_DIR} CMAKE_CONFIGURE_ARGS="${CURL_IMPERSONATE_CONFIGURE_ARGS}"
+CURL_IMPERSONATE_MAKE_ENV +=		BUILD_DIR=${CURL_IMPERSONATE_BUILD_DIR} CMAKE_CONFIGURE_ARGS="${CURL_IMPERSONATE_CONFIGURE_ARGS}"
 
-CURL_CFFI_MAKE_FLAGS +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
+CURL_CFFI_MAKE_ENV +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
 
 all: build
 init: ${WRKDIR}/.init-done
@@ -68,7 +68,7 @@ ${WRKDIR}/.patch-done: ${WRKDIR}/.extract-done
 
 ${WRKDIR}/.configure-done: ${WRKDIR}/.patch-done
 	@cd ${CURL_IMPERSONATE_DEST} && \
-		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake configure
+		env ${CURL_IMPERSONATE_MAKE_ENV} gmake configure
 	@cd ${CURL_CFFI_DEST} && \
 		${PYTHON_BIN} -m venv .venv && \
 		${PYTHON_VENV} -m pip install --upgrade pip && \
@@ -77,9 +77,9 @@ ${WRKDIR}/.configure-done: ${WRKDIR}/.patch-done
 
 ${WRKDIR}/.build-curl-impersonate-done: ${WRKDIR}/.configure-done
 	@cd ${CURL_IMPERSONATE_DEST} && \
-		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake build && \
-        env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake checkbuild && \
-		env ${CURL_IMPERSONATE_MAKE_FLAGS} gmake install-strip && \
+		env ${CURL_IMPERSONATE_MAKE_ENV} gmake build && \
+        env ${CURL_IMPERSONATE_MAKE_ENV} gmake checkbuild && \
+		env ${CURL_IMPERSONATE_MAKE_ENV} gmake install-strip && \
 		for lib in ${CURL_IMPERSONATE_DEPS_LIBS}; do \
 			cp "${CURL_IMPERSONATE_BUILD_DIR}/deps/install/lib/$${lib}" "${CURL_IMPERSONATE_INSTALL_DIR}/lib"; \
 		done && \
@@ -94,7 +94,7 @@ ${WRKDIR}/.build-curl-impersonate-done: ${WRKDIR}/.configure-done
 
 ${WRKDIR}/.build-curl_cffi-done: ${WRKDIR}/.build-curl-impersonate-done
 	@cd ${CURL_CFFI_DEST} && \
-		env ${CURL_CFFI_MAKE_FLAGS} ${PYTHON_VENV} -m build -w
+		env ${CURL_CFFI_MAKE_ENV} ${PYTHON_VENV} -m build -w
 	@echo "[Info] curl-impersonate: ${CURL_IMPERSONATE_INSTALL_DIR}"
 	@echo "[Info] curl_cffi: ${CURL_CFFI_DEST}/dist/"
 	@touch $@
