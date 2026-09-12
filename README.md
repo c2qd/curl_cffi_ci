@@ -4,7 +4,7 @@
 
 Build curl-impersonate & curl_cffi on OpenBSD (CI)  
 ref:  
-https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml  
+https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml
 
 ## Notes
 
@@ -17,20 +17,19 @@ Related project: [openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org]
 ## Use
 
 ### Pre-built binary
-Example: curl_cffi with yt-dlp
 
-```sh
-doas pkg_add python%3
-python3 -m venv .venv
-. .venv/bin/activate
-python3 -m pip install yt-dlp /path/to/curl_cffi.whl
-```
+(lib)curl-impersonate: extract  
+dep: `bash` (Required by the wrapper scripts)  
+curl_cffi: install into a venv  
+dep: `python%3`
 
 ### Building from source
+
 ```sh
 doas pkg_add cmake ninja gmake python%3
 make
 ```
+
 Disable curl_cffi build: `env DISABLE_CURL_CFFI=Yes make`
 
 ## Credits
