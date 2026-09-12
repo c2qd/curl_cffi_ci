@@ -1,7 +1,9 @@
 CURL_IMPERSONATE_VERSION =			2.2.2
 CURL_CFFI_VERSION =					0.16.3
 
-DISABLE_CURL_CFFI ?=				No
+ENABLE_CURL_CFFI ?=					Yes
+
+ENABLE_VERIFY ?=					Yes
 
 .if !defined(JOBS)
 JOBS !!= sysctl -n hw.ncpuonline
@@ -9,7 +11,7 @@ JOBS !!= sysctl -n hw.ncpuonline
 
 WRKDIR ?=							${.CURDIR}/work
 
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 PYTHON ?=							/usr/local/bin/python3
 PYTHON_VENV =						.venv/bin/python3
 .endif
@@ -25,6 +27,9 @@ _SETENV =							/usr/bin/env
 _ECHO_MSG =							/bin/echo
 _MKDIR =							/bin/mkdir
 _TAR =								/bin/tar
+_CHECKSUM =							/bin/cksum
+
+_CHECKSUM_FILE =					${.CURDIR}/checksums
 
 _INIT_COOKIE =						${WRKDIR}/.init_done
 _CHECK_DEPENDS_COOKIE =				${WRKDIR}/.check-depends_done
@@ -53,7 +58,7 @@ _CURL_IMPERSONATE_DEPS_LIBS =		libz.a libzstd.a libbrotlidec.a libbrotlicommon.a
 									libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a \
 									libssl.a libcrypto.a
 
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 _CURL_CFFI_DEST =					${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}
 
 CURL_CFFI_MAKE_ENV +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib \
@@ -70,7 +75,12 @@ build: ${_BUILD_COOKIE}
 clean:
 	rm -rf ${WRKDIR}
 
-.PHONY: all init fetch extract patch configure build clean
+gen-sum: ${_FETCH_COOKIE}
+	@rm -f checksums
+	@cd ${WRKDIR} && \
+		cksum -b -a sha256 curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz curl_cffi-${CURL_CFFI_VERSION}.tar.gz > ../checksums
+
+.PHONY: all init fetch extract patch configure build clean gen-sum
 
 ${_INIT_COOKIE}:
 	@${_MKDIR} ${WRKDIR}
@@ -78,14 +88,20 @@ ${_INIT_COOKIE}:
 
 ${_FETCH_COOKIE}: ${_INIT_COOKIE}
 	@${_FETCH_CMD} -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
-.if ${DISABLE_CURL_CFFI:L} == "no"
-	@${_FETCH_CMD} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/releases/download/v${CURL_CFFI_VERSION}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+.if ${ENABLE_VERIFY:L} == "yes"
+	@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz
+.endif
+.if ${ENABLE_CURL_CFFI:L} == "yes"
+	@${_FETCH_CMD} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+.	if ${ENABLE_VERIFY:L} == "yes"
+		@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+.	endif
 .endif
 	@${_MAKE_COOKIE} $@
 
 ${_EXTRACT_COOKIE}: ${_FETCH_COOKIE}
 	@${_TAR} xzf ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz -C ${WRKDIR}
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 	@${_TAR} xzf ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz -C ${WRKDIR}
 .endif
 	@${_MAKE_COOKIE} $@
@@ -93,7 +109,7 @@ ${_EXTRACT_COOKIE}: ${_FETCH_COOKIE}
 ${_PATCH_COOKIE}: ${_EXTRACT_COOKIE}
 	@cd ${_CURL_IMPERSONATE_DEST} && \
 		${_PATCH_CMD} < ${.CURDIR}/curl-impersonate.patch
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 	@cd ${_CURL_CFFI_DEST} && \
 		${_PATCH_CMD} < ${.CURDIR}/curl_cffi.patch
 .endif
@@ -103,7 +119,7 @@ ${_CONFIGURE_COOKIE}: ${_PATCH_COOKIE}
 	@cd ${_CURL_IMPERSONATE_DEST} && \
 		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
 		${GMAKE} configure
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 	@cd ${_CURL_CFFI_DEST} && \
 		${PYTHON} -m venv .venv && \
 		${PYTHON_VENV} -m pip install --upgrade pip && \
@@ -129,12 +145,12 @@ ${_BUILD_COOKIE}: ${_CONFIGURE_COOKIE}
 			${AR} rcs libcurl-impersonate.a libcurl-impersonate.full.o && \
 			rm -f libcurl-impersonate.full.o ${_CURL_IMPERSONATE_DEPS_LIBS} libcurl-impersonate.orig.a; \
 		fi
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 	@cd ${_CURL_CFFI_DEST} && \
 		${_SETENV} ${CURL_CFFI_MAKE_ENV} ${PYTHON_VENV} -m build -w
 .endif
 	@${_ECHO_MSG} "[Info] curl-impersonate: ${CURL_IMPERSONATE_INSTALL_DIR}/"
-.if ${DISABLE_CURL_CFFI:L} == "no"
+.if ${ENABLE_CURL_CFFI:L} == "yes"
 	@${_ECHO_MSG} "[Info] curl_cffi: ${_CURL_CFFI_DEST}/dist/*.whl"
 .endif
 	@${_MAKE_COOKIE} $@

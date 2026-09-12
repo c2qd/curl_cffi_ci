@@ -50,8 +50,9 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          git clone --branch v${{ env.CURL_IMPERSONATE_VERSION }} --depth 1 https://github.com/lexiforest/curl-impersonate
-          ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          ftp -o curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${{ env.CURL_IMPERSONATE_VERSIONL }}.tar.gz
+          ftp https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          cksum -C ${{ github.workspace }}/checksums curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           git config --global --add safe.directory "${{ github.workspace }}"
           gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
@@ -69,7 +70,7 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          cd curl-impersonate
+          cd curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}
           patch < ${{ github.workspace }}/curl-impersonate.patch
           cd ../curl_cffi-${{ env.CURL_CFFI_VERSION }}
           patch < ${{ github.workspace }}/curl_cffi.patch
@@ -78,7 +79,7 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          cd curl-impersonate
+          cd curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}
           install_dir="$PWD/openbsd-install"
           artifacts_dir="$PWD/openbsd-artifacts"
           mkdir -p "$install_dir" "$artifacts_dir"
@@ -111,7 +112,7 @@ jobs:
         with:
           name: curl-impersonate.${{ matrix.host_label }}
           path: |
-            curl-impersonate/openbsd-artifacts/*.tar.gz
+            curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}/openbsd-artifacts/*.tar.gz
 
       - name: Build curl_cffi
         shell: openbsd {0}

@@ -30,7 +30,7 @@ doas pkg_add cmake ninja gmake python%3
 make
 ```
 
-Disable curl_cffi build: `env DISABLE_CURL_CFFI=Yes make`
+Disable curl_cffi build: `env ENABLE_CURL_CFFI=No make`
 
 ## Credits
 
