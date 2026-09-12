@@ -50,7 +50,7 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          ftp -o curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${{ env.CURL_IMPERSONATE_VERSIONL }}.tar.gz
+          ftp -o curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz
           ftp https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           cksum -C ${{ github.workspace }}/checksums curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
