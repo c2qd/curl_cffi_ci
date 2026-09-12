@@ -39,22 +39,22 @@ jobs:
         uses: vmactions/openbsd-vm@86cdc08415d9d0865267e686561e276c52d62530 # v1.4.7
         with:
           release: ${{ env.OPENBSD }}
-          mem: 8192
+          mem: 16384
           arch: ${{ matrix.vm_arch }}
           envs: "GH_TOKEN"
           prepare: |
             pkg_add -Uu
             pkg_add git cmake ninja gmake python%3 github-cli
 
-      - name: Prepare sources
+      - name: Fetch / Extract sources
         shell: openbsd {0}
         run: |
           set -e
           git clone --branch v${{ env.CURL_IMPERSONATE_VERSION }} --depth 1 https://github.com/lexiforest/curl-impersonate
           ftp https://github.com/lexiforest/curl_cffi/releases/download/v${{ env.CURL_CFFI_VERSION }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           git config --global --add safe.directory "${{ github.workspace }}"
           gh run download $(gh run list --workflow test_dependencies.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId') --name artifacts.${{ matrix.vm_arch }}
-          tar xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
 
       - name: Prepare Python environment
         shell: openbsd {0}
@@ -65,7 +65,7 @@ jobs:
             $dir/bin/python3 -m pip install --upgrade pip
           done
 
-      - name: Apply patch
+      - name: Apply patches
         shell: openbsd {0}
         run: |
           set -e
@@ -81,7 +81,6 @@ jobs:
           cd curl-impersonate
           install_dir="$PWD/openbsd-install"
           artifacts_dir="$PWD/openbsd-artifacts"
-          rm -rf build-openbsd "$install_dir" "$artifacts_dir"
           mkdir -p "$install_dir" "$artifacts_dir"
 
           cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
@@ -138,7 +137,7 @@ jobs:
           python3 -m pip install cryptography-*.whl curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl
           git clone --branch v${{ env.CURL_CFFI_VERSION }} --depth 1 https://github.com/lexiforest/curl_cffi curl_cffi_test
           cd curl_cffi_test
-          python3 -m pip install "$(echo ${{ github.workspace }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl)[test]"
+          python3 -m pip install "$(echo ${{ github.workspace }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl)[test]"
           cd
           python3 -bb -m pytest ${{ github.workspace }}/curl_cffi_test/tests/unittest --ignore=${{ github.workspace }}/curl_cffi_test/tests/unittest/test_async_websockets.py
           deactivate
