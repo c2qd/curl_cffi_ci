@@ -5,7 +5,6 @@
 Build curl-impersonate & curl_cffi on OpenBSD (CI)  
 ref:  
 https://github.com/lexiforest/curl-impersonate/blob/main/.github/workflows/build.yml  
-https://github.com/libressl/portable/blob/master/.github/workflows/rust-openssl.yml
 
 ## Notes
 
@@ -17,6 +16,7 @@ Related project: [openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org]
 
 ## Use
 
+### Pre-build binary
 Example: curl_cffi with yt-dlp
 
 ```sh
@@ -25,6 +25,13 @@ python3 -m venv .venv
 . .venv/bin/activate
 python3 -m pip install yt-dlp /path/to/curl_cffi.whl
 ```
+
+### Build from source
+```sh
+doas pkg_add cmake ninja gmake python%3
+make
+```
+Disable curl_cffi build: `env DISABLE_CURL_CFFI=Yes make`
 
 ## Credits
 

@@ -1,7 +1,7 @@
 CURL_IMPERSONATE_VERSION =			2.2.2
 CURL_CFFI_VERSION =					0.16.3
-PYTHON_BIN =						/usr/local/bin/python3
-PYTHON_VENV =						.venv/bin/python3
+
+DISABLE_CURL_CFFI ?=				No
 
 .if !defined(JOBS)
 JOBS !!= sysctl -n hw.ncpuonline
@@ -9,38 +9,59 @@ JOBS !!= sysctl -n hw.ncpuonline
 
 WRKDIR ?=							${.CURDIR}/work
 
-CURL_IMPERSONATE_DEST =				${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}
-CURL_CFFI_DEST =					${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}
+.if ${DISABLE_CURL_CFFI:L} == "no"
+PYTHON ?=							/usr/local/bin/python3
+PYTHON_VENV =						.venv/bin/python3
+.endif
+GMAKE ?=							/usr/local/bin/gmake
 
-CURL_IMPERSONATE_BUILD_DIR =		${CURL_IMPERSONATE_DEST}/build
-CURL_IMPERSONATE_INSTALL_DIR =		${CURL_IMPERSONATE_DEST}/install
+CC ?=								/usr/bin/cc
+AR ?=								/usr/bin/ar
+
+_FETCH_CMD =						/usr/bin/ftp
+_PATCH_CMD =						/usr/bin/patch
+_MAKE_COOKIE =						/usr/bin/touch
+_SETENV =							/usr/bin/env
+_ECHO_MSG =							/bin/echo
+_MKDIR =							/bin/mkdir
+_TAR =								/bin/tar
+
+_INIT_COOKIE =						${WRKDIR}/.init_done
+_CHECK_DEPENDS_COOKIE =				${WRKDIR}/.check-depends_done
+_FETCH_COOKIE =						${WRKDIR}/.fetch_done
+_EXTRACT_COOKIE =					${WRKDIR}/.extract_done
+_PATCH_COOKIE =						${WRKDIR}/.patch_done
+_CONFIGURE_COOKIE =					${WRKDIR}/.configure_done
+_BUILD_COOKIE =						${WRKDIR}/.build_done
+
+_CURL_IMPERSONATE_DEST =			${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}
+
+CURL_IMPERSONATE_BUILD_DIR =		${_CURL_IMPERSONATE_DEST}/build
+CURL_IMPERSONATE_INSTALL_DIR =		${_CURL_IMPERSONATE_DEST}/install
+
+CURL_IMPERSONATE_CXX_LIBS ?=		c++abi\;pthread
 
 CURL_IMPERSONATE_CONFIGURE_ARGS +=	-G Ninja \
 									-DCMAKE_INSTALL_PREFIX=${CURL_IMPERSONATE_INSTALL_DIR} \
-									-DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread
+									-DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=${CURL_IMPERSONATE_CXX_LIBS}
 
 CURL_IMPERSONATE_MAKE_ENV +=		JOBS=${JOBS} \
 									BUILD_DIR=${CURL_IMPERSONATE_BUILD_DIR} \
 									CMAKE_CONFIGURE_ARGS="${CURL_IMPERSONATE_CONFIGURE_ARGS}"
 
-CURL_CFFI_MAKE_ENV +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib \
-									CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
-
 _CURL_IMPERSONATE_DEPS_LIBS =		libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a \
 									libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a \
 									libssl.a libcrypto.a
 
-_INIT_COOKIE = ${WRKDIR}/.init_done
-_CHECK_DEPENDS_COOKIE = ${WRKDIR}/.check-depends_done
-_FETCH_COOKIE = ${WRKDIR}/.fetch_done
-_EXTRACT_COOKIE = ${WRKDIR}/.extract_done
-_PATCH_COOKIE = ${WRKDIR}/.patch_done
-_CONFIGURE_COOKIE = ${WRKDIR}/.configure_done
-_BUILD_COOKIE = ${WRKDIR}/.build_done
+.if ${DISABLE_CURL_CFFI:L} == "no"
+_CURL_CFFI_DEST =					${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}
+
+CURL_CFFI_MAKE_ENV +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib \
+									CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
+.endif
 
 all: build
 init: ${_INIT_COOKIE}
-check-depends: ${_CHECK_DEPENDS_COOKIE}
 fetch: ${_FETCH_COOKIE}
 extract: ${_EXTRACT_COOKIE}
 patch: ${_PATCH_COOKIE}
@@ -49,63 +70,71 @@ build: ${_BUILD_COOKIE}
 clean:
 	rm -rf ${WRKDIR}
 
-.PHONY: all init check-depends fetch extract patch configure build clean
+.PHONY: all init fetch extract patch configure build clean
 
 ${_INIT_COOKIE}:
-	@mkdir ${WRKDIR}
-	@touch $@
+	@${_MKDIR} ${WRKDIR}
+	@${_MAKE_COOKIE} $@
 
-${_CHECK_DEPENDS_COOKIE}: ${_INIT_COOKIE}
-.for pkg in cmake ninja gmake python-3
-	@if ! pkg_info | grep -q ${pkg}; then \
-		echo "Please install ${pkg:S/python-/python%/} package before build" && exit 1; \
-	fi
-.endfor
-	@touch $@
-
-${_FETCH_COOKIE}: ${_CHECK_DEPENDS_COOKIE}
-	@ftp -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
-	@ftp -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/releases/download/v${CURL_CFFI_VERSION}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
-	@touch $@
+${_FETCH_COOKIE}: ${_INIT_COOKIE}
+	@${_FETCH_CMD} -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@${_FETCH_CMD} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/releases/download/v${CURL_CFFI_VERSION}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+.endif
+	@${_MAKE_COOKIE} $@
 
 ${_EXTRACT_COOKIE}: ${_FETCH_COOKIE}
-	@tar xzf ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz -C ${WRKDIR}
-	@tar xzf ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz -C ${WRKDIR}
-	@touch $@
+	@${_TAR} xzf ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz -C ${WRKDIR}
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@${_TAR} xzf ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz -C ${WRKDIR}
+.endif
+	@${_MAKE_COOKIE} $@
 
 ${_PATCH_COOKIE}: ${_EXTRACT_COOKIE}
-	@cd ${CURL_IMPERSONATE_DEST} && \
-		patch < ${.CURDIR}/curl-impersonate.patch
-	@cd ${CURL_CFFI_DEST} && \
-		patch < ${.CURDIR}/curl_cffi.patch
-	@touch $@
+	@cd ${_CURL_IMPERSONATE_DEST} && \
+		${_PATCH_CMD} < ${.CURDIR}/curl-impersonate.patch
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@cd ${_CURL_CFFI_DEST} && \
+		${_PATCH_CMD} < ${.CURDIR}/curl_cffi.patch
+.endif
+	@${_MAKE_COOKIE} $@
 
 ${_CONFIGURE_COOKIE}: ${_PATCH_COOKIE}
-	@cd ${CURL_IMPERSONATE_DEST} && \
-		env ${CURL_IMPERSONATE_MAKE_ENV} gmake configure
-	@cd ${CURL_CFFI_DEST} && \
-		${PYTHON_BIN} -m venv .venv && \
+	@cd ${_CURL_IMPERSONATE_DEST} && \
+		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
+		${GMAKE} configure
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@cd ${_CURL_CFFI_DEST} && \
+		${PYTHON} -m venv .venv && \
 		${PYTHON_VENV} -m pip install --upgrade pip && \
 		${PYTHON_VENV} -m pip install build
-	@touch $@
+.endif
+	@${_MAKE_COOKIE} $@
 
 ${_BUILD_COOKIE}: ${_CONFIGURE_COOKIE}
-	@cd ${CURL_IMPERSONATE_DEST} && \
-		env ${CURL_IMPERSONATE_MAKE_ENV} gmake build && \
-        env ${CURL_IMPERSONATE_MAKE_ENV} gmake checkbuild && \
-		env ${CURL_IMPERSONATE_MAKE_ENV} gmake install-strip && \
+	@cd ${_CURL_IMPERSONATE_DEST} && \
+		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
+		${GMAKE} build && \
+        ${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
+		${GMAKE} checkbuild && \
+		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
+		${GMAKE} install-strip && \
 		for lib in ${_CURL_IMPERSONATE_DEPS_LIBS}; do \
 			cp "${CURL_IMPERSONATE_BUILD_DIR}/deps/install/lib/$${lib}" "${CURL_IMPERSONATE_INSTALL_DIR}/lib"; \
 		done && \
 		cd "${CURL_IMPERSONATE_INSTALL_DIR}/lib" && \
-		if ! ar t libcurl-impersonate.a | grep -q libcurl-impersonate.full.o; then \
+		if ! ${AR} t libcurl-impersonate.a | grep -q libcurl-impersonate.full.o; then \
 			mv libcurl-impersonate.a libcurl-impersonate.orig.a && \
-			cc -r -o libcurl-impersonate.full.o -Wl,--whole-archive libcurl-impersonate.orig.a ${_CURL_IMPERSONATE_DEPS_LIBS} -Wl,--no-whole-archive && \
-			ar rcs libcurl-impersonate.a libcurl-impersonate.full.o && \
+			${CC} -r -o libcurl-impersonate.full.o -Wl,--whole-archive libcurl-impersonate.orig.a ${_CURL_IMPERSONATE_DEPS_LIBS} -Wl,--no-whole-archive && \
+			${AR} rcs libcurl-impersonate.a libcurl-impersonate.full.o && \
 			rm -f libcurl-impersonate.full.o ${_CURL_IMPERSONATE_DEPS_LIBS} libcurl-impersonate.orig.a; \
 		fi
-	@cd ${CURL_CFFI_DEST} && \
-		env ${CURL_CFFI_MAKE_ENV} ${PYTHON_VENV} -m build -w
-	@echo "[Info] curl-impersonate: ${CURL_IMPERSONATE_INSTALL_DIR}"
-	@echo "[Info] curl_cffi: ${CURL_CFFI_DEST}/dist/"
-	@touch $@
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@cd ${_CURL_CFFI_DEST} && \
+		${_SETENV} ${CURL_CFFI_MAKE_ENV} ${PYTHON_VENV} -m build -w
+.endif
+	@${_ECHO_MSG} "[Info] curl-impersonate: ${CURL_IMPERSONATE_INSTALL_DIR}/"
+.if ${DISABLE_CURL_CFFI:L} == "no"
+	@${_ECHO_MSG} "[Info] curl_cffi: ${_CURL_CFFI_DEST}/dist/*.whl"
+.endif
+	@${_MAKE_COOKIE} $@
