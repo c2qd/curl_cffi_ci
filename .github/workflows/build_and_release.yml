@@ -138,7 +138,7 @@ jobs:
           python3 -m pip install cryptography-*.whl curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl
           git clone --branch v${{ env.CURL_CFFI_VERSION }} --depth 1 https://github.com/lexiforest/curl_cffi curl_cffi_test
           cd curl_cffi_test
-          python3 -m pip install "$(cd ${{ github.workspace }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist && echo curl_cffi-*.whl)[test]"
+          python3 -m pip install "$(echo ${{ github.workspace }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl)[test]"
           cd
           python3 -bb -m pytest ${{ github.workspace }}/curl_cffi_test/tests/unittest --ignore=${{ github.workspace }}/curl_cffi_test/tests/unittest/test_async_websockets.py
           deactivate
