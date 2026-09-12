@@ -16,7 +16,7 @@ Related project: [openbsd_ports/www at main - c2qd/openbsd_ports - Codeberg.org]
 
 ## Use
 
-### Pre-build binary
+### Pre-built binary
 Example: curl_cffi with yt-dlp
 
 ```sh
@@ -26,7 +26,7 @@ python3 -m venv .venv
 python3 -m pip install yt-dlp /path/to/curl_cffi.whl
 ```
 
-### Build from source
+### Building from source
 ```sh
 doas pkg_add cmake ninja gmake python%3
 make
