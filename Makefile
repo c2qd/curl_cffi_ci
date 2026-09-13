@@ -77,8 +77,10 @@ clean:
 
 gen-sum: ${_FETCH_COOKIE}
 	@rm -f checksums
+	@ftp -o ${WRKDIR}/curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/archive/refs/tags/v${CURL_CFFI_VERSION }.tar.gz
 	@cd ${WRKDIR} && \
 		cksum -b -a sha256 curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz curl_cffi-${CURL_CFFI_VERSION}.tar.gz > ../checksums
+	@rm -rf ${WRKDIR}/curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz
 
 .PHONY: all init fetch extract patch configure build clean gen-sum
 

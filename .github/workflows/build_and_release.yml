@@ -56,8 +56,8 @@ jobs:
 
           cksum -C ${{ github.workspace }}/checksums curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz curl_cffi-test-${{ env.CURL_CFFI_VERSION }}.tar.gz
 
-          tar -s "|curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}/|curl-impersonate/|" -xzf curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz
-          tar -s "|curl_cffi-${{ env.CURL_CFFI_VERSION }}/|curl_cffi/|" -xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
+          tar -s "|^curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}/|curl-impersonate/|" -xzf curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.tar.gz
+          tar -s "|^curl_cffi-${{ env.CURL_CFFI_VERSION }}/|curl_cffi/|" -xzf curl_cffi-${{ env.CURL_CFFI_VERSION }}.tar.gz
           tar -s "|^curl_cffi-${{ env.CURL_CFFI_VERSION }}/|curl_cffi_test/|" -xzf curl_cffi-test-${{ env.CURL_CFFI_VERSION }}.tar.gz
 
           git config --global --add safe.directory "${{ github.workspace }}"
