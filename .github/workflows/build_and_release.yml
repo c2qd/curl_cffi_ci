@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 env:
-  REV: 3
-  CURL_IMPERSONATE_VERSION: 2.2.2
+  REV: 4
+  CURL_IMPERSONATE_VERSION: 2.2.3
   CURL_CFFI_VERSION: 0.16.3
   OPENBSD: 7.9
   GH_TOKEN: ${{ github.token }}
@@ -76,9 +76,7 @@ jobs:
         shell: openbsd {0}
         run: |
           set -e
-          cd curl-impersonate
-          patch < ${{ github.workspace }}/curl-impersonate.patch
-          cd ../curl_cffi
+          cd curl_cffi
           patch < ${{ github.workspace }}/curl_cffi.patch
 
       - name: Build curl-impersonate
@@ -90,15 +88,19 @@ jobs:
           artifacts_dir="$PWD/openbsd-artifacts"
           mkdir -p "$install_dir" "$artifacts_dir"
 
-          cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir -DCURL_IMPERSONATE_CXX_RUNTIME_LIBRARY=c++abi\;pthread"
-          gmake configure BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
-          gmake build BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args" JOBS=$(sysctl -n hw.ncpuonline)
-          gmake checkbuild BUILD_DIR=build-openbsd
-          gmake install-strip BUILD_DIR=build-openbsd CMAKE_CONFIGURE_ARGS="$cmake_args"
+          cmake_args="-G Ninja -DCMAKE_INSTALL_PREFIX=$install_dir"
+          gmake configure BUILD_DIR=build CMAKE_CONFIGURE_ARGS="$cmake_args"
+          gmake build BUILD_DIR=build CMAKE_CONFIGURE_ARGS="$cmake_args" JOBS=$(sysctl -n hw.ncpuonline)
+          gmake checkbuild BUILD_DIR=build CHECK_IDN=0
+          gmake install-strip BUILD_DIR=build CMAKE_CONFIGURE_ARGS="$cmake_args"
+
+          cmake -P build/CollectLicenses.cmake
+          license_dir="$PWD/build/licenses"
+          license_files="LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CARES LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD"
 
           install_lib_dir="$install_dir/lib"
           deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
-          deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a libcares.a"
           for lib in $deps_libs; do
             cp "$deps_lib_dir/$lib" "$install_lib_dir/"
           done
@@ -109,7 +111,7 @@ jobs:
           rm -f libcurl-impersonate.full.o $deps_libs libcurl-impersonate.orig.a
 
           tar -czf "$artifacts_dir/libcurl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" lib* \
-              -C "$install_dir" include LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD
+              -C "$install_dir" include -C "$license_dir" $license_files
           cd "$install_dir/bin"
           tar -czf "$artifacts_dir/curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}.${{ matrix.host_label }}.tar.gz" curl-impersonate curl_*
 
