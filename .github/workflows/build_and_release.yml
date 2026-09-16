@@ -143,7 +143,7 @@ jobs:
         run: |
           set -e
           . .test_venv/bin/activate
-          python3 -m pip install cryptography-*.whl curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/curl_cffi-*.whl
+          python3 -m pip install cryptography-*.whl curl_cffi/dist/curl_cffi-*.whl
           cd curl_cffi_test
           python3 -m pip install "$(echo ${{ github.workspace }}/curl_cffi-${{ env.CURL_CFFI_VERSION }}/dist/*.whl)[test]"
           cd
