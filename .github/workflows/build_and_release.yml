@@ -99,7 +99,7 @@ jobs:
           license_files="LICENSE LICENSE_BORINGSSL LICENSE_BROTLI LICENSE_CARES LICENSE_CURL LICENSE_NGHTTP2 LICENSE_NGHTTP3 LICENSE_NGTCP2 LICENSE_ZLIB LICENSE_ZSTD"
 
           install_lib_dir="$install_dir/lib"
-          deps_lib_dir="$PWD/build-openbsd/deps/install/lib"
+          deps_lib_dir="$PWD/build/deps/install/lib"
           deps_libs="libz.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a libcares.a"
           for lib in $deps_libs; do
             cp "$deps_lib_dir/$lib" "$install_lib_dir/"
