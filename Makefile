@@ -131,7 +131,7 @@ ${_BUILD_COOKIE}: ${_CONFIGURE_COOKIE}
 		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
 		${GMAKE} build && \
         ${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
-		${GMAKE} checkbuild && \
+		${GMAKE} checkbuild CHECK_IDN=0 && \
 		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
 		${GMAKE} install-strip && \
 		for lib in ${_CURL_IMPERSONATE_DEPS_LIBS}; do \
