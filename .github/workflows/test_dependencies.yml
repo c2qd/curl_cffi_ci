@@ -3,8 +3,7 @@ name: "Prepare dependencies for curl_cffi test"
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 env:
   MATURIN_OPENSSL_SYS_VERSION: 0.9.116
