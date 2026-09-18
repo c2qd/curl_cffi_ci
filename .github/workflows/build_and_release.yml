@@ -3,20 +3,20 @@ name: "Build and test"
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 env:
   REV: 4
   CURL_IMPERSONATE_VERSION: 2.2.3
   CURL_CFFI_VERSION: 0.16.3
   OPENBSD: 7.9
-  GH_TOKEN: ${{ github.token }}
 
 jobs:
   build-test:
     name: Build and test on ${{ matrix.vm_arch }}
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
     strategy:
       matrix:
         include:
@@ -33,6 +33,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          token: ""
           persist-credentials: false
 
       - name: Start VM
@@ -47,6 +48,8 @@ jobs:
             pkg_add git cmake ninja gmake python%3 github-cli
 
       - name: Fetch / Extract sources
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: openbsd {0}
         run: |
           set -e
@@ -168,6 +171,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          token: ""
           persist-credentials: false
 
       - name: Download artifacts
