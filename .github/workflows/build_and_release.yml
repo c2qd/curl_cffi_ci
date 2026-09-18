@@ -16,6 +16,7 @@ jobs:
     name: Build and test on ${{ matrix.vm_arch }}
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: read
     strategy:
       matrix:
@@ -33,7 +34,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ""
           persist-credentials: false
 
       - name: Start VM
@@ -171,7 +171,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ""
           persist-credentials: false
 
       - name: Download artifacts
