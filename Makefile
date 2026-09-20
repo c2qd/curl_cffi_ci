@@ -74,12 +74,15 @@ build: ${_BUILD_COOKIE}
 clean:
 	rm -rf ${WRKDIR}
 
-gen-sum: ${_FETCH_COOKIE}
+gen-sum:
 	@rm -f checksums
+	@mkdir -p ${WRKDIR}
+	@${_FETCH} -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
+	@${_FETCH} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
 	@${_FETCH} -V -o ${WRKDIR}/curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/archive/refs/tags/v${CURL_CFFI_VERSION}.tar.gz
 	@cd ${WRKDIR} && \
-		cksum -b -a sha256 curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz curl_cffi-${CURL_CFFI_VERSION}.tar.gz curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz > ../checksums
-	@rm -rf ${WRKDIR}/curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz
+		cksum -b -a sha256 curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz curl_cffi-${CURL_CFFI_VERSION}.tar.gz curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz > ${.CURDIR}/checksums
+	@rm -rf ${WRKDIR}/*.tar.gz
 
 .PHONY: all init fetch extract patch configure build clean gen-sum
 
