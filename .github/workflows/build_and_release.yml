@@ -6,9 +6,9 @@ on:
 permissions: {}
 
 env:
-  REV: 4
+  REV: 5
   CURL_IMPERSONATE_VERSION: 2.2.3
-  CURL_CFFI_VERSION: 0.16.3
+  CURL_CFFI_VERSION: 0.16.4b1
   OPENBSD: 7.9
 
 jobs:
@@ -150,7 +150,7 @@ jobs:
           cd curl_cffi_test
           python3 -m pip install "$(echo ${{ github.workspace }}/curl_cffi/dist/*.whl)[test]"
           cd
-          python3 -bb -m pytest ${{ github.workspace }}/curl_cffi_test/tests/unittest --ignore=${{ github.workspace }}/curl_cffi_test/tests/unittest/test_async_websockets.py
+          python3 -bb -m pytest ${{ github.workspace }}/curl_cffi_test/tests/unittest
           deactivate
 
       - name: Upload curl_cffi
