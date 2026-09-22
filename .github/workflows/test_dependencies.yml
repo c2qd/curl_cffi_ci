@@ -55,11 +55,9 @@ jobs:
             python3 -m pip install --upgrade pip
             python3 -m pip install wheel build
             python3 -m pip download --no-binary maturin --no-binary cryptography maturin "cryptography>=46.0.4,<47.0"
-            tar xzf maturin-*.tar.gz
-            tar xzf cryptography-*.tar.gz
-            rm maturin-*.tar.gz cryptography-*.tar.gz
-            mv maturin-* maturin
-            mv cryptography-* cryptography
+            tar -s "|^maturin-[0-9][0-9.]*/|maturin/|" -xzf maturin-*.tar.gz
+            tar -s "|^cryptography-[0-9][0-9.]*/|cryptography/|" -xzf cryptography-*.tar.gz
+            rm -f maturin-*.tar.gz cryptography-*.tar.gz
             cd maturin
             if [ ${{ matrix.vm_arch }} == "riscv64" ]; then
               # https://cvsweb.openbsd.org/checkout/ports/devel/maturin/patches/patch-src_target_mod_rs?rev=1.5
