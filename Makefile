@@ -1,6 +1,12 @@
 CURL_IMPERSONATE_VERSION =			2.2.3
 CURL_CFFI_VERSION =					0.16.4b1
 
+_CURL_IMPERSONATE_URL=				https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
+_CURL_CFFI_URL =					https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+
+_CURL_IMPERSONATE_DISTFILE =		curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz
+_CURL_CFFI_DISTFILE =				curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+
 ENABLE_CURL_CFFI ?=					Yes
 
 ENABLE_VERIFY ?=					Yes
@@ -39,12 +45,10 @@ _PATCH_COOKIE =						${WRKDIR}/.patch_done
 _CONFIGURE_COOKIE =					${WRKDIR}/.configure_done
 _BUILD_COOKIE =						${WRKDIR}/.build_done
 
-_CURL_IMPERSONATE_DEST =			${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}
+_CURL_IMPERSONATE_DEST =			${WRKDIR}/curl-impersonate
 
 CURL_IMPERSONATE_BUILD_DIR =		${_CURL_IMPERSONATE_DEST}/build
 CURL_IMPERSONATE_INSTALL_DIR =		${_CURL_IMPERSONATE_DEST}/install
-
-CURL_IMPERSONATE_CXX_LIBS ?=		c++abi\;pthread
 
 CURL_IMPERSONATE_CONFIGURE_ARGS +=	-G Ninja \
 									-DCMAKE_INSTALL_PREFIX=${CURL_IMPERSONATE_INSTALL_DIR}
@@ -58,7 +62,7 @@ _CURL_IMPERSONATE_DEPS_LIBS =		libz.a libzstd.a libbrotlidec.a libbrotlicommon.a
 									libssl.a libcrypto.a libcares.a
 
 .if ${ENABLE_CURL_CFFI:L} == "yes"
-_CURL_CFFI_DEST =					${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}
+_CURL_CFFI_DEST =					${WRKDIR}/curl_cffi
 
 CURL_CFFI_MAKE_ENV +=				IMPERSONATE_BUILD_DIR=${CURL_IMPERSONATE_INSTALL_DIR}/lib \
 									CFLAGS=-I${CURL_IMPERSONATE_INSTALL_DIR}/lib/include
@@ -74,14 +78,14 @@ build: ${_BUILD_COOKIE}
 clean:
 	rm -rf ${WRKDIR}
 
-gen-sum:
+gen-sum: ${_INIT_COOKIE}
 	@rm -f checksums
 	@mkdir -p ${WRKDIR}
-	@${_FETCH} -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
-	@${_FETCH} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+	@${_FETCH} -V -o ${WRKDIR}/${_CURL_IMPERSONATE_DISTFILE} ${_CURL_IMPERSONATE_URL}
+	@${_FETCH} -V -o ${WRKDIR}/${_CURL_CFFI_DISTFILE} ${_CURL_CFFI_URL}
 	@${_FETCH} -V -o ${WRKDIR}/curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz https://github.com/lexiforest/curl_cffi/archive/refs/tags/v${CURL_CFFI_VERSION}.tar.gz
 	@cd ${WRKDIR} && \
-		cksum -b -a sha256 curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz curl_cffi-${CURL_CFFI_VERSION}.tar.gz curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz > ${.CURDIR}/checksums
+		cksum -b -a sha256 ${_CURL_IMPERSONATE_DISTFILE} ${_CURL_CFFI_DISTFILE} curl_cffi-test-${CURL_CFFI_VERSION}.tar.gz > ${.CURDIR}/checksums
 	@rm -rf ${WRKDIR}/*.tar.gz
 
 .PHONY: all init fetch extract patch configure build clean gen-sum
@@ -91,22 +95,22 @@ ${_INIT_COOKIE}:
 	@${_MAKE_COOKIE} $@
 
 ${_FETCH_COOKIE}: ${_INIT_COOKIE}
-	@${_FETCH} -V -o ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
+	@${_FETCH} -V -o ${WRKDIR}/${_CURL_IMPERSONATE_DISTFILE} ${_CURL_IMPERSONATE_URL}
 .if ${ENABLE_VERIFY:L} == "yes"
-	@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz
+	@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} ${_CURL_IMPERSONATE_DISTFILE}
 .endif
 .if ${ENABLE_CURL_CFFI:L} == "yes"
-	@${_FETCH} -V -o ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+	@${_FETCH} -V -o ${WRKDIR}/${_CURL_CFFI_DISTFILE} ${_CURL_CFFI_URL}
 .	if ${ENABLE_VERIFY:L} == "yes"
-		@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} curl_cffi-${CURL_CFFI_VERSION}.tar.gz
+		@cd ${WRKDIR} && ${_CHECKSUM} -C ${_CHECKSUM_FILE} ${_CURL_CFFI_DISTFILE}
 .	endif
 .endif
 	@${_MAKE_COOKIE} $@
 
 ${_EXTRACT_COOKIE}: ${_FETCH_COOKIE}
-	@${_TAR} xzf ${WRKDIR}/curl-impersonate-${CURL_IMPERSONATE_VERSION}.tar.gz -C ${WRKDIR}
+	@cd ${WRKDIR} && ${_TAR} -s "|^curl-impersonate-${CURL_IMPERSONATE_VERSION}|curl-impersonate/|" -xzf ${_CURL_IMPERSONATE_DISTFILE}
 .if ${ENABLE_CURL_CFFI:L} == "yes"
-	@${_TAR} xzf ${WRKDIR}/curl_cffi-${CURL_CFFI_VERSION}.tar.gz -C ${WRKDIR}
+	@cd ${WRKDIR} && ${_TAR} -s "|^curl_cffi-${CURL_CFFI_VERSION}|curl_cffi/|" -xzf ${_CURL_CFFI_DISTFILE}
 .endif
 	@${_MAKE_COOKIE} $@
 
