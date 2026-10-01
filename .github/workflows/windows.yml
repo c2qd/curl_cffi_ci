@@ -13,9 +13,6 @@ jobs:
   build-test:
     name: Build and test on ${{ matrix.vm_arch }}
     runs-on: ${{ matrix.runner }}
-    permissions:
-      contents: read
-      actions: read
     strategy:
       matrix:
         include:
@@ -32,17 +29,16 @@ jobs:
       - name: Install llvm-mingw
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW }}/llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}.zip -OutFile "${{ env.RUNNER_TEMP }}\llvm.zip"
-          Expand-Archive -Path "${{ env.RUNNER_TEMP }}\llvm.zip" -DestinationPath "D:\"
-          "D:\llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}\bin" | Out-File -FilePath ${{ env.GITHUB_PATH }} -Encoding utf8 -Append
+          Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW }}/llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}.zip -OutFile "$env:RUNNER_TEMP\llvm.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\llvm.zip" -DestinationPath "$env:GITHUB_WORKSPACE"
+          "$env:GITHUB_WORKSPACE\llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build curl-impersonate
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${{ env.CURL_IMPERSONATE_VERSION }}.zip -OutFile "${{ env.RUNNER_TEMP }}\ci.zip"
-          Expand-Archive -Path "${{ env.RUNNER_TEMP }}\ci.zip" -DestinationPath "D:\"
-          D:
+          Expand-Archive -Path "${{ env.RUNNER_TEMP }}\ci.zip" -DestinationPath "$env:GITHUB_WORKSPACE"
           cd curl-impersonate-${{ env.CURL_IMPERSONATE_VERSION }}
-          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.RUNNER_TEMP }}\install" -DUSE_LIBIDN2=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}++
+          cmake -S . -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$env:RUNNER_TEMP\install" -DUSE_LIBIDN2=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}++
           cmake --build build --target install-all --parallel
           "${{ env.RUNNER_TEMP }}\install\bin\curl-impersonate.exe" -V
