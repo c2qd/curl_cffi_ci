@@ -31,7 +31,7 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW }}/llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}.zip -OutFile "$env:RUNNER_TEMP\llvm.zip"
           Expand-Archive -Path "$env:RUNNER_TEMP\llvm.zip" -DestinationPath "$env:GITHUB_WORKSPACE"
-          "$env:GITHUB_WORKSPACE\llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Prepend
+          "$env:GITHUB_WORKSPACE\llvm-mingw-${{ env.LLVM_MINGW }}-ucrt-${{ matrix.arch }}\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install NASM and Make
         shell: pwsh
