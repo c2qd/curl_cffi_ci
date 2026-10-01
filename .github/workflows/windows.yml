@@ -24,7 +24,7 @@ jobs:
             compiler: clang
           - arch: i686
             runner: windows-2025
-            compiler: i686-w64-mingw-32-clang
+            compiler: i686-w64-mingw32-clang
     steps:
       - name: Install llvm-mingw
         shell: pwsh
