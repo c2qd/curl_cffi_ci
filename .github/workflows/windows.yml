@@ -26,19 +26,19 @@ jobs:
           sudo apt install make cmake ninja nasm curl xz-utils git
 
       - name: Install llvm-mingw
-        if: matrix.toolchain == "clang"
+        if: matrix.toolchain == 'clang'
         run: |
           curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
           sudo mkdir -p /opt/llvm-mingw
           sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
 
       - name: Install GCC (mingw-w64, for x86_64)
-        if: matrix.toolchain == "gcc" && matrix.arch == "x86_64"
+        if: matrix.toolchain == 'gcc' && matrix.arch == 'x86_64'
         run: |
           sudo apt install mingw-w64{,-common,-tools,-ucrt64-dev}
 
       - name: Install GCC (mingw-w64, for i686)
-        if: matrix.toolchain == "gcc" && matrix.arch == "i686"
+        if: matrix.toolchain == 'gcc' && matrix.arch == 'i686'
         run: |
           sudo apt install mingw-w64{,-common,-tools,-i686-dev}
 
