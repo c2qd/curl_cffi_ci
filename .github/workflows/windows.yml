@@ -137,7 +137,7 @@ jobs:
         run: |
           cd curl-impersonate
           .\packages\bin\curl-impersonate.exe -V
-          foreach ($wrapper in Get-ChildItem .\package\bin\*.bat) {
+          foreach ($wrapper in Get-ChildItem .\packages\bin\*.bat) {
             echo $wrapper.FullName
             & $wrapper.FullName --ca-native https://tls.browserleaks.com
             if ($LASTEXITCODE -ne 0) {
