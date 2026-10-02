@@ -52,6 +52,7 @@ jobs:
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
           CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install" ./scripts/mingw.sh
+          make install-strip
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
@@ -96,7 +97,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          bin/curl-impersonate.exe -V
+          ./bin/curl-impersonate.exe -V
           foreach ($wrapper in Get-ChildItem bin/*.bat) {
             echo $wrapper.FullName
             & $wrapper.FullName https://tls.browserleaks.com
