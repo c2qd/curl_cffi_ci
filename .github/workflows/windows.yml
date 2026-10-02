@@ -98,6 +98,7 @@ jobs:
         run: |
           bin/curl-impersonate.exe -V
           foreach ($wrapper in Get-ChildItem bin/*.bat) {
+            echo $wrapper.FullName
             & $wrapper.FullName https://tls.browserleaks.com
             if ($LASTEXITCODE -ne 0) {
               exit $LASTEXITCODE
