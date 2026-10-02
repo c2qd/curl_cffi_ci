@@ -61,7 +61,7 @@ jobs:
           path: curl-impersonate/curl-impersonate.tgz
 
   build-w:
-    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }})
+    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
     runs-on: windows-latest
     strategy:
       matrix:
@@ -101,7 +101,8 @@ jobs:
         if: matrix.toolchain == 'gcc'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-ucrt-r2/winlibs-${{ matrix.arch }}-posix-seh-gcc-16.2.0-mingw-w64ucrt-14.0.0-r2.7z -OutFile winlibs.7z
+          $exception = if ("${{ matrix.arch }}" -eq "i686") { "dwarf" } else { "seh" }
+          Invoke-WebRequest -Uri "https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-ucrt-r2/winlibs-${{ matrix.arch }}-posix-$exception-gcc-16.2.0-mingw-w64ucrt-14.0.0-r2.7z" -OutFile winlibs.7z
           7z x winlibs.7z
           $path = (Get-ChildItem -Directory -Path .\winlibs* | Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
           if ("${{ matrix.script }}" -eq "sh") {
