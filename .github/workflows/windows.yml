@@ -52,7 +52,6 @@ jobs:
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
           CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install" ./scripts/mingw.sh
-          make install-strip
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
