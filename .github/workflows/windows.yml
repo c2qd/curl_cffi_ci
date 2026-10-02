@@ -8,7 +8,7 @@ permissions: {}
 jobs:
   build:
     name: Build (${{ matrix.arch }}, ${{ matrix.toolchain }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         arch: [x86_64, i686, aarch64]
@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install make cmake ninja-build nasm curl xz-utils git
+          sudo apt-get update
+          sudo apt-get install make cmake ninja-build nasm curl xz-utils git
 
       - name: Install llvm-mingw
         if: matrix.toolchain == 'clang'
@@ -35,7 +35,7 @@ jobs:
       - name: Install GCC (mingw-w64, for x86_64)
         if: matrix.toolchain == 'gcc' && matrix.arch == 'x86_64'
         run: |
-          sudo apt install mingw-w64{,-common,-tools,-ucrt64-dev}
+          sudo apt-get install mingw-w64{,-common,-tools,-ucrt64-dev}
 
       - name: Install GCC (mingw-w64, for i686)
         if: matrix.toolchain == 'gcc' && matrix.arch == 'i686'
