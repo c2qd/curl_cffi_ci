@@ -44,8 +44,10 @@ jobs:
 
       - name: Build
         run: |
-          git clone --branch feature/mingw --depth 1 https://github.com/c2qd/curl-impersonate.git
+          git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
+          git switch feature/mingw
+          git cherry-pick 4c2a84f850ad3dd5418ce3946ff276d031521a8a
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
