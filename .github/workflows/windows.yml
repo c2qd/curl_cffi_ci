@@ -1,4 +1,4 @@
-name: "Build with llvm-mingw"
+name: "Build with MinGW-w64"
 
 on:
   workflow_dispatch:
