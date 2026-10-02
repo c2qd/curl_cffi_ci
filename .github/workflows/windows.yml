@@ -1,4 +1,4 @@
-name: "Build with MinGW-w64"
+name: "Build with MinGW-w64 and test"
 
 on:
   workflow_dispatch:
@@ -61,7 +61,7 @@ jobs:
           path: curl-impersonate/curl-impersonate.tgz
 
   build-w:
-    name: Build and test on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
+    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
     runs-on: windows-latest
     strategy:
       matrix:
@@ -233,3 +233,24 @@ jobs:
               exit $LASTEXITCODE
             }
           }
+
+  rm-artifacts:
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Remove artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+          --paginate \
+          "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" \
+          --jq '.artifacts[].id' |
+          while read -r id; do
+            gh api \
+            --method DELETE \
+            "/repos/${{ github.repository }}/actions/artifacts/$id"
+          done
