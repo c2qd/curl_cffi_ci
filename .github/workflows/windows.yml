@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install make cmake ninja nasm curl xz-utils git
+          sudo apt install make cmake ninja-build nasm curl xz-utils git
 
       - name: Install llvm-mingw
         if: matrix.toolchain == 'clang'
