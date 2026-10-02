@@ -108,8 +108,9 @@ jobs:
           if ("${{ matrix.script }}" -eq "sh") {
             $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
           }
-          cd $path\bin
-          Remove-Item nasm.exe ninja.exe cmake.exe -Force
+          Remove-Item "$path\bin\nasm.exe" -Force
+          Remove-Item "$path\bin\ninja.exe" -Force
+          Remove-Item "$path\bin\cmake.exe" -Force
           echo "MINGW_ROOT=$path" >> $env:GITHUB_ENV
 
       - name: Clone the repo
