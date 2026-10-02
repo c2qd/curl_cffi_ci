@@ -123,7 +123,7 @@ jobs:
         shell: bash
         run: |
           cd curl-impersonate
-          CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./package" ./scripts/mingw.sh
+          CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages" ./scripts/mingw.sh
 
       - name: Build via win/mingw-build.bat
         if: matrix.script == 'bat'
@@ -136,7 +136,7 @@ jobs:
         shell: pwsh
         run: |
           cd curl-impersonate
-          .\package\bin\curl-impersonate.exe -V
+          .\packages\bin\curl-impersonate.exe -V
           foreach ($wrapper in Get-ChildItem .\package\bin\*.bat) {
             echo $wrapper.FullName
             & $wrapper.FullName --ca-native https://tls.browserleaks.com
