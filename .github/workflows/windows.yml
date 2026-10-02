@@ -61,7 +61,7 @@ jobs:
           path: curl-impersonate/curl-impersonate.tgz
 
   build-w:
-    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
+    name: Build and test on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
     runs-on: windows-latest
     strategy:
       matrix:
@@ -106,6 +106,7 @@ jobs:
           7z x winlibs.7z
           $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
           Remove-Item "$path\bin\nasm.exe" -Force
+          Remove-Item "$path\bin\yasm.exe" -Force
           Remove-Item "$path\bin\ninja.exe" -Force
           Remove-Item "$path\bin\cmake.exe" -Force
           if ("${{ matrix.script }}" -eq "sh") {
