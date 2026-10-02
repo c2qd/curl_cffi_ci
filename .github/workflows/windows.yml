@@ -99,7 +99,7 @@ jobs:
           ./bin/curl-impersonate.exe -V
           foreach ($wrapper in Get-ChildItem bin/*.bat) {
             echo $wrapper.FullName
-            & $wrapper.FullName -ca-native https://tls.browserleaks.com
+            & $wrapper.FullName --ca-native https://tls.browserleaks.com
             if ($LASTEXITCODE -ne 0) {
               exit $LASTEXITCODE
             }
