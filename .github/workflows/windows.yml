@@ -57,7 +57,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: artifacts.${{ matrix.arch }}.${{ matrix.toolchain }}
+          name: artifacts.ubuntu.${{ matrix.arch }}.${{ matrix.toolchain }}
           path: curl-impersonate/curl-impersonate.tgz
 
   build-w:
@@ -132,46 +132,90 @@ jobs:
           cd curl-impersonate
           .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
 
-      - name: Test
+      - name: Build tarball
         shell: pwsh
         run: |
           cd curl-impersonate
-          .\packages\bin\curl-impersonate.exe -V
-          foreach ($wrapper in Get-ChildItem .\packages\bin\*.bat) {
-            echo $wrapper.FullName
-            & $wrapper.FullName --ca-native https://tls.browserleaks.com
-            if ($LASTEXITCODE -ne 0) {
-              exit $LASTEXITCODE
-            }
-          }
+          tar -C packages -czf curl-impersonate.tgz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: artifacts.windows-${{ matrix.script }}.${{ matrix.arch }}.${{ matrix.toolchain }}
+          path: curl-impersonate/curl-impersonate.tgz
 
   test:
     name: Test
-    needs: build
+    needs: [build, build-w]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-        - arch: x86_64
+        - built_on: ubuntu
+          arch: x86_64
           toolchain: clang
           os: windows-latest
-        - arch: x86_64
+        - built_on: ubuntu
+          arch: x86_64
           toolchain: gcc
           os: windows-latest
-        - arch: i686
+        - built_on: ubuntu
+          arch: i686
           toolchain: clang
           os: windows-latest
-        - arch: i686
+        - built_on: ubuntu
+          arch: i686
           toolchain: gcc
           os: windows-latest
-        - arch: aarch64
+        - built_on: ubuntu
+          arch: aarch64
+          toolchain: clang
+          os: windows-11-arm
+        - built_on: windows-bat
+          arch: x86_64
+          toolchain: clang
+          os: windows-latest
+        - built_on: windows-sh
+          arch: x86_64
+          toolchain: clang
+          os: windows-latest
+        - built_on: windows-bat
+          arch: x86_64
+          toolchain: gcc
+          os: windows-latest
+        - built_on: windows-sh
+          arch: x86_64
+          toolchain: gcc
+          os: windows-latest
+        - built_on: windows-bat
+          arch: i686
+          toolchain: clang
+          os: windows-latest
+        - built_on: windows-sh
+          arch: i686
+          toolchain: clang
+          os: windows-latest
+        - built_on: windows-bat
+          arch: i686
+          toolchain: gcc
+          os: windows-latest
+        - built_on: windows-sh
+          arch: i686
+          toolchain: gcc
+          os: windows-latest
+        - built_on: windows-bat
+          arch: aarch64
+          toolchain: clang
+          os: windows-11-arm
+        - built_on: windows-sh
+          arch: aarch64
           toolchain: clang
           os: windows-11-arm
     steps:
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: artifacts.${{ matrix.arch }}.${{ matrix.toolchain }}
+          name: artifacts.${{ matrix.built_on }}.${{ matrix.arch }}.${{ matrix.toolchain }}
 
       - name: Extract
         shell: bash
