@@ -7,7 +7,7 @@ permissions: {}
 
 jobs:
   build:
-    name: Build (${{ matrix.arch }}, ${{ matrix.toolchain }})
+    name: Build on Ubuntu (${{ matrix.arch }}, ${{ matrix.toolchain }})
     runs-on: ubuntu-26.04
     strategy:
       matrix:
@@ -60,6 +60,89 @@ jobs:
           name: artifacts.${{ matrix.arch }}.${{ matrix.toolchain }}
           path: curl-impersonate/curl-impersonate.tgz
 
+  build-w:
+    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x86_64, i686, aarch64]
+        toolchain: [clang, gcc]
+        script: [sh, bat]
+        exclude:
+          - arch: aarch64
+            toolchain: gcc
+    env:
+      ARCH: ${{ matrix.arch }}
+      TOOLCHAIN: ${{ matrix.toolchain }}
+    steps:
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          choco install nasm
+
+      - name: Install dependencies (sh)
+        shell: pwsh
+        run: |
+          choco install make
+
+      - name: Install llvm-mingw
+        if: matrix.toolchain == 'clang'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-x86_64.zip -OutFile llvm-mingw.zip
+          7z x llvm-mingw.zip
+          $path = (Get-ChildItem -Directory -Path .\llvm-mingw-* | Select-Object -First 1).FullName
+          if ("${{ matrix.script }}" -eq "sh") {
+            $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
+          }
+          echo "MINGW_ROOT=$path" >> $env:GITHUB_ENV
+
+      - name: Install GCC/MinGW-w64 (WinLibs)
+        if: matrix.toolchain == 'gcc'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-ucrt-r2/winlibs-${{ matrix.arch }}-posix-seh-gcc-16.2.0-mingw-w64ucrt-14.0.0-r2.7z -OutFile winlibs.7z
+          7z x winlibs.7z
+          $path = (Get-ChildItem -Directory -Path .\winlibs* | Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
+          if ("${{ matrix.script }}" -eq "sh") {
+            $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
+          }
+          echo "MINGW_ROOT=$path" >> $env:GITHUB_ENV
+
+      - name: Clone the repo
+        shell: pwsh
+        run: |
+          git clone https://github.com/c2qd/curl-impersonate.git
+          cd curl-impersonate
+          git switch feature/mingw
+          git cherry-pick --no-commit 4c2a84f850ad3dd5418ce3946ff276d031521a8a
+
+      - name: Build via scripts/mingw.sh
+        if: matrix.script == 'sh'
+        shell: bash
+        run: |
+          cd curl-impersonate
+          CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./package" ./scripts/mingw.sh
+
+      - name: Build via win/mingw-build.bat
+        if: matrix.script == 'bat'
+        shell: pwsh
+        run: |
+          cd curl-impersonate
+          .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
+
+      - name: Test
+        shell: pwsh
+        run: |
+          .\package\bin\curl-impersonate.exe -V
+          foreach ($wrapper in Get-ChildItem .\package\bin\*.bat) {
+            echo $wrapper.FullName
+            & $wrapper.FullName --ca-native https://tls.browserleaks.com
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+            }
+          }
+
   test:
     name: Test
     needs: build
@@ -96,8 +179,8 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          ./bin/curl-impersonate.exe -V
-          foreach ($wrapper in Get-ChildItem bin/*.bat) {
+          .\bin\curl-impersonate.exe -V
+          foreach ($wrapper in Get-ChildItem bin\*.bat) {
             echo $wrapper.FullName
             & $wrapper.FullName --ca-native https://tls.browserleaks.com
             if ($LASTEXITCODE -ne 0) {
