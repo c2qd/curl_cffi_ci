@@ -121,12 +121,12 @@ jobs:
         run: |
           cd curl-impersonate
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
-          ./scripts/mingw.sh configure
-          ./scripts/mingw.sh build
+          ./scripts/mingw.sh configure --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh build --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
           if [ "${{ matrix.arch }}" != "aarch64" ]; then
-            ./scripts/mingw.sh checkbuild
+            ./scripts/mingw.sh checkbuild --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
           fi
-          ./scripts/mingw.sh install-strip
+          ./scripts/mingw.sh install-strip --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
 
       - name: Build via win/mingw-build.bat
         if: matrix.script == 'bat'
