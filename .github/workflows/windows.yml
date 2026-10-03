@@ -53,8 +53,6 @@ jobs:
           export USE_WINE=1
           ./scripts/mingw.sh configure
           ./scripts/mingw.sh build
-          set +x
-          echo "mingw.sh build: $?"
           if [ "${{ matrix.arch }}" != "aarch64" ]; then
             ./scripts/mingw.sh checkbuild
           fi
