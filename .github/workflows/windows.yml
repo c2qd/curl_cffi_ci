@@ -16,6 +16,9 @@ jobs:
         exclude:
           - arch: aarch64
             toolchain: gcc
+    env:
+      MINGW_TOOLCHAIN: "${{ matrix.toolchain }}"
+      MINGW_ARCH: "${{ matrix.arch }}"
     steps:
       - name: Install dependencies
         run: |
@@ -48,12 +51,11 @@ jobs:
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
-          ./scripts/mingw.sh configure --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
-          ./scripts/mingw.sh build --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh build
           if [ "${{ matrix.arch }}" != "aarch64" ]; then
-            ./scripts/mingw.sh checkbuild --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+            ./scripts/mingw.sh checkbuild
           fi
-          ./scripts/mingw.sh install-strip --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh install-strip
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
@@ -74,8 +76,8 @@ jobs:
           - arch: aarch64
             toolchain: gcc
     env:
-      ARCH: ${{ matrix.arch }}
-      TOOLCHAIN: ${{ matrix.toolchain }}
+      MINGW_ARCH: ${{ matrix.arch }}
+      MINGW_TOOLCHAIN: ${{ matrix.toolchain }}
     steps:
       - name: Install dependencies
         shell: pwsh
@@ -121,12 +123,11 @@ jobs:
         run: |
           cd curl-impersonate
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
-          ./scripts/mingw.sh configure --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
-          ./scripts/mingw.sh build --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh build
           if [ "${{ matrix.arch }}" != "aarch64" ]; then
-            ./scripts/mingw.sh checkbuild --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+            ./scripts/mingw.sh checkbuild
           fi
-          ./scripts/mingw.sh install-strip --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh install-strip
 
       - name: Build via win/mingw-build.bat
         if: matrix.script == 'bat'
