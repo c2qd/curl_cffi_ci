@@ -58,7 +58,7 @@ jobs:
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
           ./scripts/mingw.sh build
-          if [ "${{ matrix.arch }}" != "aarch64" ]; then
+          if [ "${{ matrix.arch }}" == "x86_64" ] || [ "${{ matrix.arch }}" == "i686" ]; then
             ./scripts/mingw.sh checkbuild
           fi
           ./scripts/mingw.sh install-strip
@@ -132,7 +132,7 @@ jobs:
           cd curl-impersonate
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
           ./scripts/mingw.sh build
-          if [ "${{ matrix.arch }}" != "aarch64" ]; then
+          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
             ./scripts/mingw.sh checkbuild
           fi
           ./scripts/mingw.sh install-strip
