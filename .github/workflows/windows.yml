@@ -44,7 +44,7 @@ jobs:
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
-          git cherry-pick --no-commit 4c2a84f850ad3dd5418ce3946ff276d031521a8a
+          git cherry-pick --no-commit bdfe62cfc22c11d0f86101503b388a12edd19ef7
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
