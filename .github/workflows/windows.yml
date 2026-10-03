@@ -24,9 +24,13 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install make cmake ninja-build nasm curl xz-utils git wine wine64 wine32
+          sudo apt-get install make cmake ninja-build curl xz-utils git
+          if [ "${{ matrix.arch }}" = "x86_64' ] || [ "${{ matrix.arch }} = "i686" ]; then
+            sudo dpkg --add-architecture i386
+            sudo apt-get update
+            sudo apt-get install nasm wine wine64 wine32
+          fi
 
       - name: Install MinGW toolchain
         run: |
@@ -86,8 +90,9 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ matrix.script }}" -eq "sh") {
-            choco install nasm make
-          } else {
+            choco install make
+          }
+          if ("${{ matrix.arch }}" -eq "x86_64" || "${{ matrix.arch }}" -eq "i686") {
             choco install nasm
           }
 
