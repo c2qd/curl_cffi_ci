@@ -22,8 +22,9 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install make cmake ninja-build nasm curl xz-utils git
+          sudo apt-get install make cmake ninja-build nasm curl xz-utils git wine wine64 wine32
 
       - name: Install MinGW toolchain
         run: |
@@ -49,7 +50,14 @@ jobs:
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
-          ./scripts/mingw.sh all
+          export USE_WINE=1
+          ./scripts/mingw.sh configure
+          ./scripts/mingw.sh build
+          set +x
+          echo "mingw.sh build: $?"
+          if [ "${{ matrix.arch }}" != "aarch64" ]; then
+            ./scripts/mingw.sh checkbuild
+          fi
           ./scripts/mingw.sh install-strip
           tar -C install -czf "curl-impersonate.tgz" .
 
@@ -118,7 +126,11 @@ jobs:
         run: |
           cd curl-impersonate
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
-          ./scripts/mingw.sh all
+          ./scripts/mingw.sh configure
+          ./scripts/mingw.sh build
+          if [ "${{ matrix.arch }}" != "aarch64" ]; then
+            ./scripts/mingw.sh checkbuild
+          fi
           ./scripts/mingw.sh install-strip
 
       - name: Build via win/mingw-build.bat
