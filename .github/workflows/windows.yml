@@ -16,9 +16,6 @@ jobs:
         exclude:
           - arch: aarch64
             toolchain: gcc
-    env:
-      ARCH: ${{ matrix.arch }}
-      TOOLCHAIN: ${{ matrix.toolchain }}
     steps:
       - name: Install dependencies
         run: |
@@ -51,12 +48,12 @@ jobs:
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
-          ./scripts/mingw.sh configure
-          ./scripts/mingw.sh build
+          ./scripts/mingw.sh configure --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
+          ./scripts/mingw.sh build --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
           if [ "${{ matrix.arch }}" != "aarch64" ]; then
-            ./scripts/mingw.sh checkbuild
+            ./scripts/mingw.sh checkbuild --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
           fi
-          ./scripts/mingw.sh install-strip
+          ./scripts/mingw.sh install-strip --toolchain="${{ matrix.toolchain }}" --arch="${{ matrix.arch }}"
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
