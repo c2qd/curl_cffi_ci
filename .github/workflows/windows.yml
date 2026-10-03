@@ -7,7 +7,7 @@ permissions: {}
 
 jobs:
   build:
-    name: Build on Ubuntu (${{ matrix.arch }}, ${{ matrix.toolchain }})
+    name: Build on Ubuntu (${{ matrix.toolchain }}, ${{ matrix.arch }})
     runs-on: ubuntu-26.04
     strategy:
       matrix:
@@ -72,7 +72,7 @@ jobs:
           path: curl-impersonate/curl-impersonate.tgz
 
   build-w:
-    name: Build on Windows (${{ matrix.arch }}, ${{ matrix.toolchain }}, ${{ matrix.script }})
+    name: Build on Windows (${{ matrix.toolchain }}, ${{ matrix.arch }}, ${{ matrix.script }})
     runs-on: windows-latest
     strategy:
       matrix:
@@ -157,7 +157,7 @@ jobs:
           path: curl-impersonate/curl-impersonate.tgz
 
   test:
-    name: Test
+    name: Test (${{ matrix.built_on }}, ${{ matrix.toolchain }}, ${{ matrix.arch }}, ${{ matrix.script }})
     needs: [build, build-w]
     runs-on: ${{ matrix.os }}
     strategy:
