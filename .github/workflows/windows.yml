@@ -25,22 +25,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install make cmake ninja-build nasm curl xz-utils git
 
-      - name: Install llvm-mingw
-        if: matrix.toolchain == 'clang'
+      - name: Install MinGW toolchain
         run: |
-          curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
-          sudo mkdir -p /opt/llvm-mingw
-          sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
-
-      - name: Install GCC (mingw-w64, for x86_64)
-        if: matrix.toolchain == 'gcc' && matrix.arch == 'x86_64'
-        run: |
-          sudo apt-get install mingw-w64{,-common,-tools,-ucrt64-dev}
-
-      - name: Install GCC (mingw-w64, for i686)
-        if: matrix.toolchain == 'gcc' && matrix.arch == 'i686'
-        run: |
-          sudo apt install mingw-w64{,-common,-tools,-i686-dev}
+          if [ "${{ matrix.toolchain }}" = "clang" ]; then
+            curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+            sudo mkdir -p /opt/llvm-mingw
+            sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
+          elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
+            if [ "${{ matrix.arch }}" = "x86_64" ]; then
+              sudo apt-get install mingw-w64{,-common,-tools,-ucrt64-dev}
+            elif [ "${{ matrix.arch }}" = "i686" ]; then
+              sudo apt-get install mingw-w64{,-common,-tools,-i686-dev}
+            fi
+          fi
 
       - name: Build
         run: |
@@ -51,7 +48,9 @@ jobs:
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
-          CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install" ./scripts/mingw.sh
+          export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
+          ./scripts/mingw.sh all
+          ./scripts/mingw.sh install-strip
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
@@ -78,33 +77,28 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
-          choco install nasm
-
-      - name: Install dependencies (sh)
-        shell: pwsh
-        run: |
-          choco install make
-
-      - name: Install llvm-mingw
-        if: matrix.toolchain == 'clang'
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-x86_64.zip -OutFile llvm-mingw.zip
-          7z x llvm-mingw.zip
-          $path = (Get-ChildItem -Directory -Path .\llvm-mingw-* | Select-Object -First 1).FullName
           if ("${{ matrix.script }}" -eq "sh") {
-            $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
+            choco install nasm make
+          } else {
+            choco install nasm
           }
-          echo "MINGW_ROOT=$path" >> $env:GITHUB_ENV
 
-      - name: Install GCC/MinGW-w64 (niXman/mingw-builds-binaries)
-        if: matrix.toolchain == 'gcc'
+      - name: Install MinGW toolchain
         shell: pwsh
         run: |
-          $exception = if ("${{ matrix.arch }}" -eq "i686") { "dwarf" } else { "seh" }
-          Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/16.2.0-rt_v14-rev1/${{ matrix.arch }}-16.2.0-release-mcf-$exception-ucrt-rt_v14-rev1.7z -OutFile mingw.7z
-          7z x mingw.7z
-          $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
+          mkdir toolchain
+          cd toolchain
+          if ("${{ matrix.toolchain }}" -eq "clang") {
+            Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-x86_64.zip -OutFile llvm-mingw.zip
+            7z x llvm-mingw.zip
+            $path = (Get-ChildItem -Directory -Path .\llvm-mingw-* | Select-Object -First 1).FullName
+          } else if ("${{ matrix.toolchain }}" -eq "gcc") {
+            $exception = if ("${{ matrix.arch }}" -eq "i686") { "dwarf" } else { "seh" }
+            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/16.2.0-rt_v14-rev1/${{ matrix.arch }}-16.2.0-release-mcf-$exception-ucrt-rt_v14-rev1.7z -OutFile mingw.7z
+            7z x mingw.7z
+            $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
+          }
+
           if ("${{ matrix.script }}" -eq "sh") {
             $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
           }
@@ -116,14 +110,16 @@ jobs:
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
-          git cherry-pick --no-commit 4c2a84f850ad3dd5418ce3946ff276d031521a8a
+          git cherry-pick --no-commit bdfe62cfc22c11d0f86101503b388a12edd19ef7
 
       - name: Build via scripts/mingw.sh
         if: matrix.script == 'sh'
         shell: bash
         run: |
           cd curl-impersonate
-          CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages" ./scripts/mingw.sh
+          export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
+          ./scripts/mingw.sh all
+          ./scripts/mingw.sh install-strip
 
       - name: Build via win/mingw-build.bat
         if: matrix.script == 'bat'
@@ -132,7 +128,7 @@ jobs:
           cd curl-impersonate
           .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
 
-      - name: Build tarball
+      - name: Make tarball
         shell: pwsh
         run: |
           cd curl-impersonate
@@ -237,7 +233,7 @@ jobs:
   rm-artifacts:
     if: always()
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     steps:
