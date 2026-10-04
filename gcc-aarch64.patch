@@ -12,3 +12,30 @@
 
  set(_boringssl_cmake_args
    ${_common_cmake_args}
+--- patches/boringssl.patch.orig
++++ patches/boringssl.patch
+@@ -126,6 +126,27 @@ index a8039c385..3dfbea8fb 100644
+  extern "C" {
+  #include "../../../third_party/fiat/p256_field.c.inc"
+  }
++diff --git a/crypto/internal.h b/crypto/internal.h
++index dda193317..00f1805b5 100644
++--- a/crypto/internal.h
+++++ b/crypto/internal.h
++@@ -35,14 +35,12 @@
++ #include <stdlib.h>
++ #endif
++
++-#if defined(OPENSSL_THREADS) && \
++-    (!defined(OPENSSL_WINDOWS) || defined(__MINGW32__))
+++#if 0
++ #include <pthread.h>
++ #define OPENSSL_PTHREADS
++ #endif
++
++-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_PTHREADS) && \
++-    defined(OPENSSL_WINDOWS)
+++#if 1
++ #define OPENSSL_WINDOWS_THREADS
++ #endif
++
