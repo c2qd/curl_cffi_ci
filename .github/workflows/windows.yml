@@ -5,6 +5,9 @@ on:
 
 permissions: {}
 
+env:
+  PR336_COMMIT: 190caf97aec24cff22bad563ee26e873c8cc07c5
+
 jobs:
   build:
     name: Build on Ubuntu (${{ matrix.toolchain }}, ${{ matrix.arch }})
@@ -51,7 +54,7 @@ jobs:
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
-          git cherry-pick --no-commit 190caf97aec24cff22bad563ee26e873c8cc07c5
+          git cherry-pick --no-commit ${{ env.PR336_COMMIT }}
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
              export MINGW_ROOT="/opt/llvm-mingw"
           fi
@@ -123,7 +126,7 @@ jobs:
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
-          git cherry-pick --no-commit bdfe62cfc22c11d0f86101503b388a12edd19ef7
+          git cherry-pick --no-commit $env:PR336_COMMIT
 
       - name: Build via scripts/mingw.sh
         if: matrix.script == 'sh'
