@@ -7,8 +7,7 @@ permissions: {}
 
 env:
   LLVM_MINGW_V: "20260922"
-  GCC_V: "16.2.0"
-  GCC_MINGW_V: "rt_v14-rev1"
+  GCC_MINGW_V: "gcc-16"
   PR336_COMMIT: 190caf97aec24cff22bad563ee26e873c8cc07c5
 
 jobs:
@@ -20,8 +19,6 @@ jobs:
         arch: [x86_64, i686, aarch64, armv7]
         toolchain: [clang, gcc]
         exclude:
-          - arch: aarch64
-            toolchain: gcc
           - arch: armv7
             toolchain: gcc
     env:
@@ -45,11 +42,9 @@ jobs:
             sudo mkdir -p /opt/llvm-mingw
             sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
-            if [ "${{ matrix.arch }}" = "x86_64" ]; then
-              sudo apt-get install mingw-w64{,-common,-tools,-ucrt64-dev}
-            elif [ "${{ matrix.arch }}" = "i686" ]; then
-              sudo apt-get install mingw-w64{,-common,-tools,-i686-dev}
-            fi
+            curl -fsSL -o gcc-mingw.tar.xz https://github.com/AmanoTeam/mingw-gcc-cross/releases/download/${{ env.GCC_MINGW_V }}/x86_64-unknown-linux-gnu.tar.xz
+            sudo mkdir -p /opt/gcc-mingw
+            sudo tar -xJf gcc-mingw.tar.xz --strip-components=1 -C /opt/gcc-mingw
           fi
 
       - name: Build
@@ -59,7 +54,9 @@ jobs:
           git switch feature/mingw
           git cherry-pick --no-commit ${{ env.PR336_COMMIT }}
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
-             export MINGW_ROOT="/opt/llvm-mingw"
+            export MINGW_ROOT="/opt/llvm-mingw"
+          elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
+            export MINGW_ROOT="/opt/gcc-mingw"
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
