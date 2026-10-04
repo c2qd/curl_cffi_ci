@@ -39,3 +39,6 @@
 + #define OPENSSL_WINDOWS_THREADS
 + #endif
 +
+ diff --git a/crypto/rand/windows.cc b/crypto/rand/windows.cc
+ index ebd0d4afd..bf9c75e26 100644
+ --- a/crypto/rand/windows.cc
