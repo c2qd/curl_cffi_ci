@@ -67,7 +67,7 @@ jobs:
             export MINGW_ROOT="/opt/gcc-mingw"
             if [ "${{ matrix.arch }}" = "aarch64" ]; then
               patch -p1 < "${{ github.workspace }}/gcc-aarch64.patch"
-              export CMAKE_CONFIGURE_ARGS="JOBS=1"
+              export JOBS=1
             fi
           fi
           export CMAKE_CONFIGURE_ARGS="$CMAKE_CONFIGURE_ARGS -DCMAKE_INSTALL_PREFIX=./install"
