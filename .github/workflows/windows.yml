@@ -65,7 +65,6 @@ jobs:
             export MINGW_ROOT="/opt/llvm-mingw"
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
             export MINGW_ROOT="/opt/gcc-mingw"
-            export CMAKE_CONFIGURE_ARGS="-DCMAKE_ASM_NASM_COMPILER=/usr/bin/nasm"
             if [ "${{ matrix.arch }}" = "aarch64" ]; then
               patch < "${{ github.workspace }}/gcc-aarch64.patch"
             fi
