@@ -6,6 +6,9 @@ on:
 permissions: {}
 
 env:
+  LLVM_MINGW_V: "20260922"
+  GCC_V: "16.2.0"
+  GCC_MINGW_V: "rt_v14-rev1"
   PR336_COMMIT: 190caf97aec24cff22bad563ee26e873c8cc07c5
 
 jobs:
@@ -38,7 +41,7 @@ jobs:
       - name: Install MinGW toolchain
         run: |
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
-            curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+            curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-ubuntu-22.04-x86_64.tar.xz
             sudo mkdir -p /opt/llvm-mingw
             sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
@@ -105,13 +108,17 @@ jobs:
           mkdir toolchain
           cd toolchain
           if ("${{ matrix.toolchain }}" -eq "clang") {
-            Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-x86_64.zip -OutFile llvm-mingw.zip
+            Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-x86_64.zip -OutFile llvm-mingw.zip
             7z x llvm-mingw.zip
             $path = (Get-ChildItem -Directory -Path .\llvm-mingw-* | Select-Object -First 1).FullName
           } elseif ("${{ matrix.toolchain }}" -eq "gcc") {
-            $exception = if ("${{ matrix.arch }}" -eq "i686") { "dwarf" } else { "seh" }
-            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/16.2.0-rt_v14-rev1/${{ matrix.arch }}-16.2.0-release-mcf-$exception-ucrt-rt_v14-rev1.7z -OutFile mingw.7z
-            7z x mingw.7z
+            $exception = if ("${{ matrix.arch }}" -eq "i686") {
+              "dwarf"
+            } elseif ("${{ matrix.arch }}" -eq "x86_64") {
+                "seh"
+            }
+            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_V }}-${{ env.GCC_MINGW_V }}/${{ matrix.arch }}-${{ env.GCC_V }}-${{ env.GCC_MINGW_V }}-release-win32-$exception-ucrt-${{ env.GCC_MINGW_V }}.7z -OutFile gcc-mingw.7z
+            7z x gcc-mingw.7z
             $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
           }
 
@@ -166,66 +173,66 @@ jobs:
     strategy:
       matrix:
         include:
-        - built_on: ubuntu
-          arch: x86_64
-          toolchain: clang
-          os: windows-latest
-        - built_on: ubuntu
-          arch: x86_64
-          toolchain: gcc
-          os: windows-latest
-        - built_on: ubuntu
-          arch: i686
-          toolchain: clang
-          os: windows-latest
-        - built_on: ubuntu
-          arch: i686
-          toolchain: gcc
-          os: windows-latest
-        - built_on: ubuntu
-          arch: aarch64
-          toolchain: clang
-          os: windows-11-arm
-        - built_on: windows-bat
-          arch: x86_64
-          toolchain: clang
-          os: windows-latest
-        - built_on: windows-sh
-          arch: x86_64
-          toolchain: clang
-          os: windows-latest
-        - built_on: windows-bat
-          arch: x86_64
-          toolchain: gcc
-          os: windows-latest
-        - built_on: windows-sh
-          arch: x86_64
-          toolchain: gcc
-          os: windows-latest
-        - built_on: windows-bat
-          arch: i686
-          toolchain: clang
-          os: windows-latest
-        - built_on: windows-sh
-          arch: i686
-          toolchain: clang
-          os: windows-latest
-        - built_on: windows-bat
-          arch: i686
-          toolchain: gcc
-          os: windows-latest
-        - built_on: windows-sh
-          arch: i686
-          toolchain: gcc
-          os: windows-latest
-        - built_on: windows-bat
-          arch: aarch64
-          toolchain: clang
-          os: windows-11-arm
-        - built_on: windows-sh
-          arch: aarch64
-          toolchain: clang
-          os: windows-11-arm
+          - built_on: ubuntu
+            arch: x86_64
+            toolchain: clang
+            os: windows-latest
+          - built_on: ubuntu
+            arch: x86_64
+            toolchain: gcc
+            os: windows-latest
+          - built_on: ubuntu
+            arch: i686
+            toolchain: clang
+            os: windows-latest
+          - built_on: ubuntu
+            arch: i686
+            toolchain: gcc
+            os: windows-latest
+          - built_on: ubuntu
+            arch: aarch64
+            toolchain: clang
+            os: windows-11-arm
+          - built_on: windows-bat
+            arch: x86_64
+            toolchain: clang
+            os: windows-latest
+          - built_on: windows-sh
+            arch: x86_64
+            toolchain: clang
+            os: windows-latest
+          - built_on: windows-bat
+            arch: x86_64
+            toolchain: gcc
+            os: windows-latest
+          - built_on: windows-sh
+            arch: x86_64
+            toolchain: gcc
+            os: windows-latest
+          - built_on: windows-bat
+            arch: i686
+            toolchain: clang
+            os: windows-latest
+          - built_on: windows-sh
+            arch: i686
+            toolchain: clang
+            os: windows-latest
+          - built_on: windows-bat
+            arch: i686
+            toolchain: gcc
+            os: windows-latest
+          - built_on: windows-sh
+            arch: i686
+            toolchain: gcc
+            os: windows-latest
+          - built_on: windows-bat
+            arch: aarch64
+            toolchain: clang
+            os: windows-11-arm
+          - built_on: windows-sh
+            arch: aarch64
+            toolchain: clang
+            os: windows-11-arm
     steps:
       - name: Download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
