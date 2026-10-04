@@ -1,5 +1,5 @@
---- CMakeLists.txt.orig
-+++ CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
 @@ -306,9 +306,9 @@ ExternalProject_Add(brotli
  # In addition, guard these options with -Wno-unknown-warning-option to
  # prevent clang from failing on them.
@@ -12,8 +12,8 @@
 
  set(_boringssl_cmake_args
    ${_common_cmake_args}
---- patches/boringssl.patch.orig
-+++ patches/boringssl.patch
+--- a/patches/boringssl.patch
++++ b/patches/boringssl.patch
 @@ -126,6 +126,27 @@ index a8039c385..3dfbea8fb 100644
   extern "C" {
   #include "../../../third_party/fiat/p256_field.c.inc"
