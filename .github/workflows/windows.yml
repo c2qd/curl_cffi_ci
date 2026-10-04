@@ -21,6 +21,8 @@ jobs:
         arch: [x86_64, i686, aarch64, armv7]
         toolchain: [clang, gcc]
         exclude:
+          - arch: aarch64
+            toolchain: gcc
           - arch: armv7
             toolchain: gcc
     env:
@@ -203,10 +205,6 @@ jobs:
           - built_on: ubuntu
             arch: aarch64
             toolchain: clang
-            os: windows-11-arm
-          - built_on: ubuntu
-            arch: aarch64
-            toolchain: gcc
             os: windows-11-arm
           - built_on: windows-bat
             arch: x86_64
