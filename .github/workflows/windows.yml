@@ -129,7 +129,7 @@ jobs:
             } elseif ("${{ matrix.arch }}" -eq "x86_64") {
                 "seh"
             }
-            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_WIN_V }}-${{ env.GCC_MINGW_WIN_V }}/${{ matrix.arch }}-${{ env.GCC_WIN_V }}-release-win32-$exception-ucrt-${{ env.GCC_MINGW_WIN_V }}.7z -OutFile gcc-mingw.7z
+            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_WIN_V }}-${{ env.GCC_MINGW_WIN_V }}/${{ matrix.arch }}-${{ env.GCC_WIN_V }}-release-posix-$exception-ucrt-${{ env.GCC_MINGW_WIN_V }}.7z -OutFile gcc-mingw.7z
             7z x gcc-mingw.7z
             $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
           }
