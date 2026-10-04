@@ -65,6 +65,7 @@ jobs:
             export MINGW_ROOT="/opt/llvm-mingw"
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
             export MINGW_ROOT="/opt/gcc-mingw"
+            export CMAKE_CONFIGURE_ARGS="-DCMAKE_ASM_NASM_COMPILER=/usr/bin/nasm"
             if [ "${{ matrix.arch }}" = "aarch64" ]; then
               patch < "${{ github.workspace }}/gcc-aarch64.patch"
             fi
@@ -90,11 +91,13 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [x86_64, i686, aarch64]
+        arch: [x86_64, i686, aarch64, armv7]
         toolchain: [clang, gcc]
         script: [sh, bat]
         exclude:
           - arch: aarch64
+            toolchain: gcc
+          - arch: armv7
             toolchain: gcc
     env:
       MINGW_ARCH: ${{ matrix.arch }}
@@ -169,6 +172,7 @@ jobs:
           tar -C packages -czf curl-impersonate.tgz .
 
       - name: Upload artifact
+        if: ${{ ! (matrix.toolchain == 'clang' && matrix.arch == 'armv7') }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts.windows-${{ matrix.script }}.${{ matrix.arch }}.${{ matrix.toolchain }}
