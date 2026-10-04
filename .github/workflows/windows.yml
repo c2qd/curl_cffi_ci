@@ -95,7 +95,7 @@ jobs:
           if ("${{ matrix.script }}" -eq "sh") {
             choco install make
           }
-          if ("${{ matrix.arch }}" -eq "x86_64" || "${{ matrix.arch }}" -eq "i686") {
+          if ("${{ matrix.arch }}" -eq "x86_64" -or "${{ matrix.arch }}" -eq "i686") {
             choco install nasm
           }
 
