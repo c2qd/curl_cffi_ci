@@ -1,0 +1,51 @@
+BasedOnStyle: LLVM
+ColumnLimit: 120
+# Indentation and Tabs
+IndentWidth: 4
+TabWidth: 4
+NamespaceIndentation: All
+AlwaysBreakTemplateDeclarations: Yes
+FixNamespaceComments: true
+SpacesBeforeTrailingComments: 1
+SpaceBeforeParens: Never
+AccessModifierOffset: -4
+
+# Brace Wrapping
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+BreakAfterOpenBracketBracedList: true
+BreakBeforeCloseBracketBracedList: true
+BracedInitializerIndentWidth: 4
+
+BinPackArguments: false
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: LeftWithLastLine
+
+IncludeBlocks: Regroup
+IncludeIsMainRegex: "([-_](test|unittest))?$"
+IncludeCategories:
+  - Regex: '^".*\.h"'
+    Priority: 1
+
+  - Regex: "^<[^/]+/.*>"
+    Priority: 2
+
+  - Regex: "^<.*>"
+    Priority: 3

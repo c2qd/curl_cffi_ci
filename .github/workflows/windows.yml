@@ -279,21 +279,23 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
+          echo "======Info======"
           .\bin\curl-impersonate.exe -V
+          echo "" && echo "" && echo ""
+          echo "=====Access via curl-impersonate.exe======"
           foreach ($wrapper in Get-ChildItem bin\*.bat) {
-            echo $wrapper.FullName
+            echo "" && echo "" && echo ""
+            echo "======$($wrapper.BaseName)====="
+            echo ""
             & $wrapper.FullName --ca-native https://tls.peet.ws/api/all
             if ($LASTEXITCODE -ne 0) {
               exit $LASTEXITCODE
             }
           }
-
-      - name: Exec sample program
-        shell: pwsh
-        run: |
+          echo "" && echo "" && echo ""
+          echo "======Access via sample program======"
           cd lib
           .\a.exe
-          echo "exit=$LASTEXITCODE"
 
   rm-artifacts:
     if: always()
