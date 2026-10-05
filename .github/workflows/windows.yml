@@ -30,7 +30,6 @@ jobs:
       MINGW_ARCH: "${{ matrix.arch }}"
     steps:
       - name: Check out the repo
-        if: ${{ matrix.toolchain == 'gcc' && matrix.arch == 'aarch64' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -64,20 +63,25 @@ jobs:
           git switch feature/mingw
           git cherry-pick --no-commit ${{ env.PR336_COMMIT }}
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
-            export MINGW_ROOT="/opt/llvm-mingw"
+            export MINGW_ROOT="/opt/llvm-mingw" >> "$GITHUB_ENV"
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
-            export MINGW_ROOT="/opt/gcc-mingw"
-            if [ "${{ matrix.arch }}" = "aarch64" ]; then
-              patch < "${{ github.workspace }}/gcc-aarch64.patch"
-            fi
+            export MINGW_ROOT="/opt/gcc-mingw" >> "$GITHUB_ENV"
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
           ./scripts/mingw.sh build
-          if [ "${{ matrix.arch }}" == "x86_64" ] || [ "${{ matrix.arch }}" == "i686" ]; then
+          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
             ./scripts/mingw.sh checkbuild
           fi
           ./scripts/mingw.sh install-strip
+
+      - name: Build a sample program
+        run: |
+          cp "${{ github.workspace }}/sample.c" .
+          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.c -L./install -lcurl-impersonate -o install/a.exe
+
+      - name: Make tarball
+        run: |
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
@@ -165,6 +169,13 @@ jobs:
         run: |
           cd curl-impersonate
           .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
+
+      - name: Build a sample program
+        shell: bash
+        run: |
+          cd curl-impersonate
+          cp "${{ github.workspace }}/sample.c" .
+          "$MINGW_ROOT/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages -lcurl-impersonate -o packages/a.exe
 
       - name: Make tarball
         shell: pwsh
@@ -268,6 +279,11 @@ jobs:
               exit $LASTEXITCODE
             }
           }
+
+      - name: Exec sample program
+        shell: pwsh
+        run: |
+          .\a.exe
 
   rm-artifacts:
     if: always()
