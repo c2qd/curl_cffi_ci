@@ -293,6 +293,7 @@ jobs:
         run: |
           cd lib
           .\a.exe
+          echo "exit=$LASTEXITCODE"
 
   rm-artifacts:
     if: always()
