@@ -287,7 +287,7 @@ jobs:
             echo "" && echo "" && echo ""
             echo "======$($wrapper.BaseName)====="
             echo ""
-            & $wrapper.FullName --ca-native https://tls.peet.ws/api/all
+            & $wrapper.FullName --ca-native https://kittens.sh/api/clean
             if ($LASTEXITCODE -ne 0) {
               exit $LASTEXITCODE
             }

@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    const char *url = "https://tls.peet.ws/api/all";
+    const char *url = "https://kittens.sh/api/clean";
     const char *profiles[] = {"chrome100",     "chrome101",     "chrome104",  "chrome107",
                               "chrome110",     "chrome116",     "chrome119",  "chrome120",
                               "chrome123",     "chrome124",     "chrome131",  "chrome131_android",
