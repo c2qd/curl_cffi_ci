@@ -80,7 +80,7 @@ jobs:
         run: |
           cd curl-impersonate
           cp "${{ github.workspace }}/sample.c" .
-          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.c -L./install -lcurl-impersonate -o install/a.exe
+          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/a.exe
 
       - name: Make tarball
         run: |
@@ -182,7 +182,7 @@ jobs:
         run: |
           cd curl-impersonate
           cp "${{ github.workspace }}/sample.c" .
-          "$MINGW_ROOT/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages -lcurl-impersonate -o packages/a.exe
+          "$MINGW_ROOT/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/a.exe
 
       - name: Make tarball
         shell: pwsh
@@ -290,6 +290,7 @@ jobs:
       - name: Exec sample program
         shell: pwsh
         run: |
+          cd lib
           .\a.exe
 
   rm-artifacts:
