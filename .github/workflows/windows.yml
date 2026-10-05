@@ -56,16 +56,20 @@ jobs:
             sudo tar -xJf gcc-mingw.tar.xz --strip-components=1 -C /opt/gcc-mingw
           fi
 
-      - name: Build
+      - name: Clone the repo
         run: |
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
           git cherry-pick --no-commit ${{ env.PR336_COMMIT }}
+
+      - name: Build
+        run: |
+          cd curl-impersonate
           if [ "${{ matrix.toolchain }}" = "clang" ]; then
-            export MINGW_ROOT="/opt/llvm-mingw" >> "$GITHUB_ENV"
+            echo "MINGW_ROOT=/opt/llvm-mingw" >> "$GITHUB_ENV"
           elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
-            export MINGW_ROOT="/opt/gcc-mingw" >> "$GITHUB_ENV"
+            echo "MINGW_ROOT=/opt/gcc-mingw" >> "$GITHUB_ENV"
           fi
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
@@ -77,6 +81,7 @@ jobs:
 
       - name: Build a sample program
         run: |
+          cd curl-impersonate
           cp "${{ github.workspace }}/sample.c" .
           ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.c -L./install -lcurl-impersonate -o install/a.exe
 
@@ -108,6 +113,11 @@ jobs:
       MINGW_ARCH: ${{ matrix.arch }}
       MINGW_TOOLCHAIN: ${{ matrix.toolchain }}
     steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - name: Install dependencies
         shell: pwsh
         run: |
