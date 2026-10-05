@@ -84,6 +84,7 @@ jobs:
 
       - name: Make tarball
         run: |
+          cd curl-impersonate
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
