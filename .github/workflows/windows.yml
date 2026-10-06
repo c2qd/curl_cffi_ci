@@ -101,8 +101,8 @@ jobs:
           cp ${{ github.workspace }}/sample.* .
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./install/include sample.c -L./install/lib -static -lcurl-impersonate -o install/lib/c_s.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -static -o install/lib/cpp_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -DCURL_STATICLIB -I./install/include sample.c -L./install/lib -static -lcurl-impersonate -o install/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -DCURL_STATICLIB -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -static -o install/lib/cpp_s.exe
 
       - name: Make tarball
         run: |
@@ -224,9 +224,9 @@ jobs:
           cd curl-impersonate
           cp "$GITHUB_WORKSPACE"/sample.* .
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -o packages/lib/cpp_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -static -o packages/lib/c_s.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -static -o packages/lib/cpp_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -o packages/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -DCURL_STATICLIB -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -static -o packages/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -DCURL_STATICLIB -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -static -o packages/lib/cpp_s.exe
 
       - name: Make tarball
         shell: bash
