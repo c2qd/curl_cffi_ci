@@ -78,7 +78,7 @@ jobs:
 
       - name: Create the static lib
         run: |
-          depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
           cd curl-impersonate
           for lib in $depslib_list; do
             cp "build/deps/install/lib/$lib" install/lib
@@ -200,7 +200,7 @@ jobs:
       - name: Create the static lib
         shell: bash
         run: |
-          depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
           cd curl-impersonate
           for lib in $depslib_list; do
             cp "build/deps/install/lib/$lib" packages/lib
