@@ -86,8 +86,14 @@ jobs:
           cd install/lib
           mv libcurl-impersonate.a{,.orig}
           echo "CREATE libcurl-impersonate.a
-          ADDLIB $depslib_list libcurl-impersonate.a.orig
-          SAVE" | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
+          {
+            echo "CREATE libcurl-impersonate.a"
+            echo "ADDLIB $depslib_list libcurl-impersonate.a.orig"
+            for lib in $depslib_list; do
+              echo "ADDLIB $lib"
+            done
+            echo "SAVE"
+          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
           rm -f $depslib_list *.orig
 
       - name: Build a sample program
@@ -96,6 +102,8 @@ jobs:
           cp ${{ github.workspace }}/sample.* .
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./install/include sample.c -L./install/lib -static -lcurl-impersonate -o install/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -static -o install/lib/cpp_s.exe
 
       - name: Make tarball
         run: |
@@ -193,6 +201,26 @@ jobs:
           cd curl-impersonate
           .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
 
+      - name: Create the static lib
+        run: |
+          depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
+          cd curl-impersonate
+          for lib in $depslib_list; do
+            cp "build/deps/install/lib/$lib" install/lib
+          done
+          cd install/lib
+          mv libcurl-impersonate.a{,.orig}
+          echo "CREATE libcurl-impersonate.a
+          {
+            echo "CREATE libcurl-impersonate.a"
+            echo "ADDLIB $depslib_list libcurl-impersonate.a.orig"
+            for lib in $depslib_list; do
+              echo "ADDLIB $lib"
+            done
+            echo "SAVE"
+          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
+          rm -f $depslib_list *.orig
+
       - name: Build a sample program
         shell: bash
         run: |
@@ -200,6 +228,8 @@ jobs:
           cp "$GITHUB_WORKSPACE"/sample.* .
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -o packages/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -static -o packages/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -static -o packages/lib/cpp_s.exe
 
       - name: Make tarball
         shell: pwsh
@@ -304,8 +334,8 @@ jobs:
           echo "===Info==="
           ./bin/curl-impersonate.exe -V
           echo "=========="
-          for exe in "./bin/curl_chrome150.bat -fsS --ca-native https://kittens.sh/api/clean" "./lib/c_d.exe" "./lib/cpp_d.exe"; do
-            if $exe | jq -e --slurpfile expected "${{ github.workspace }}/fp.json" '. as $actual | $expected[0].chrome150[] | select(.ja4 == $actual.ja4 and .akamai_hash == $actual.akamai_hash and .user_agent == $actual.user_agent)' >/dev/null; then
+          for exe in "./bin/curl_chrome150.bat -fsS --ca-native https://kittens.sh/api/clean" "./lib/c_d.exe" "./lib/cpp_d.exe" "./lib/c_s.exe" "./lib/cpp_s.exe"; do
+            if $exe | jq -e --slurpfile expected "$GITHUB_WORKSPACE/fp.json" '. as $actual | $expected[0].chrome150[] | select(.ja4 == $actual.ja4 and .akamai_hash == $actual.akamai_hash and .user_agent == $actual.user_agent)' >/dev/null; then
               echo "Ok $exe"
             else
               echo "Failed $exe"
