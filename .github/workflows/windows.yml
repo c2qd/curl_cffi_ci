@@ -277,25 +277,26 @@ jobs:
           tar -xzf curl-impersonate.tgz
 
       - name: Test
-        shell: pwsh
+        shell: bash
         run: |
-          echo "======Info======"
-          .\bin\curl-impersonate.exe -V
-          echo "" && echo "" && echo ""
-          echo "=====Access via curl-impersonate.exe======"
-          foreach ($wrapper in Get-ChildItem bin\*.bat) {
-            echo "" && echo "" && echo ""
-            echo "======$($wrapper.BaseName)====="
-            echo ""
-            & $wrapper.FullName --ca-native https://kittens.sh/api/clean
-            if ($LASTEXITCODE -ne 0) {
-              exit $LASTEXITCODE
-            }
-          }
-          echo "" && echo "" && echo ""
-          echo "======Access via sample program======"
-          cd lib
-          .\a.exe
+          set -euo pipefail
+          echo "===Info==="
+          ./bin/curl-impersonate.exe -V
+          echo "=========="
+          for exe in "./bin/curl-impersonate.exe -fsS --ca-native https://kittens.sh/api/clean" "./lib/a.exe"; do
+            if $exe |\
+            jq -e --slurpfile expected "${{ github.workspace }}/fp.json" '\
+            . as $actual | $expected[0].chrome150[] | select(\
+              .ja4 == $actual.ja4 and\
+              .akamai_hash == $actual.akamai_hash and\
+              .user_agent == $actual.user_agent\
+            )' >/dev/null; then
+              echo "Ok $exe"
+            else
+              echo "Failed $exe"
+              exit 1
+            fi
+          done
 
   rm-artifacts:
     if: always()
