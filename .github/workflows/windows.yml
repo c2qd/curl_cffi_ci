@@ -80,8 +80,8 @@ jobs:
         run: |
           cd curl-impersonate
           cp ${{ github.workspace }}/sample.* .
-          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
-          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++ -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-c++"" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
 
       - name: Make tarball
         run: |
@@ -184,8 +184,8 @@ jobs:
         run: |
           cd curl-impersonate
           cp ${{ github.workspace }}/sample.* .
-          "$MINGW_ROOT/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
-          ${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }} -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
 
       - name: Make tarball
         shell: pwsh
