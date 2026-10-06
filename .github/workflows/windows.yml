@@ -87,7 +87,7 @@ jobs:
           mv libcurl-impersonate.a{,.orig}
           echo "CREATE libcurl-impersonate.a
           ADDLIB $depslib_list libcurl-impersonate.a.orig
-          SAVE" | ar -M
+          SAVE" | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
           rm -f $depslib_list *.orig
 
       - name: Build a sample program
