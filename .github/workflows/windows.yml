@@ -87,7 +87,7 @@ jobs:
           mv libcurl-impersonate.a{,.orig}
           {
             echo "CREATE libcurl-impersonate.a"
-            echo "ADDLIB $depslib_list libcurl-impersonate.a.orig"
+            echo "ADDLIB libcurl-impersonate.a.orig"
             for lib in $depslib_list; do
               echo "ADDLIB $lib"
             done
@@ -214,7 +214,7 @@ jobs:
           echo "CREATE libcurl-impersonate.a
           {
             echo "CREATE libcurl-impersonate.a"
-            echo "ADDLIB $depslib_list libcurl-impersonate.a.orig"
+            echo "ADDLIB libcurl-impersonate.a.orig"
             for lib in $depslib_list; do
               echo "ADDLIB $lib"
             done
