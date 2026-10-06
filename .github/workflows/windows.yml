@@ -85,7 +85,6 @@ jobs:
           done
           cd install/lib
           mv libcurl-impersonate.a{,.orig}
-          echo "CREATE libcurl-impersonate.a
           {
             echo "CREATE libcurl-impersonate.a"
             echo "ADDLIB $depslib_list libcurl-impersonate.a.orig"
@@ -140,47 +139,48 @@ jobs:
           persist-credentials: false
 
       - name: Install dependencies
-        shell: pwsh
+        shell: bash
         run: |
-          if ("${{ matrix.script }}" -eq "sh") {
+          if [ "${{ matrix.script }}" = "sh" ]; then
             choco install make
-          }
-          if ("${{ matrix.arch }}" -eq "x86_64" -or "${{ matrix.arch }}" -eq "i686") {
+          fi
+          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
             choco install nasm
-          }
+          fi
 
       - name: Install MinGW toolchain
-        shell: pwsh
+        shell: bash
         run: |
           mkdir toolchain
           cd toolchain
-          if ("${{ matrix.toolchain }}" -eq "clang") {
-            Invoke-WebRequest -Uri https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-x86_64.zip -OutFile llvm-mingw.zip
+          if [ "${{ matrix.toolchain }}" = "clang" ]; then
+            curl -fsSL -o llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-x86_64.zip
             7z x llvm-mingw.zip
-            $path = (Get-ChildItem -Directory -Path .\llvm-mingw-* | Select-Object -First 1).FullName
-          } elseif ("${{ matrix.toolchain }}" -eq "gcc") {
-            $exception = if ("${{ matrix.arch }}" -eq "i686") {
-              "dwarf"
-            } elseif ("${{ matrix.arch }}" -eq "x86_64") {
-                "seh"
-            }
-            Invoke-WebRequest -Uri https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_WIN_V }}-${{ env.GCC_MINGW_WIN_V }}/${{ matrix.arch }}-${{ env.GCC_WIN_V }}-release-posix-$exception-ucrt-${{ env.GCC_MINGW_WIN_V }}.7z -OutFile gcc-mingw.7z
+            rm -f llvm-mingw.zip
+            mingw_path=$(realpath llvm-mingw-*)
+          elif [ "${{ matrix.toolchain }}" = "gcc" ]; then
+            if [ "${{ matrix.arch }}" = "x86_64" ]; then
+              exception="seh"
+            elif [ "${{ matrix.arch }}" = "i686" ]; then
+              exception="dwarf"
+            fi
+            curl -fsSL -o gcc-mingw.7z https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_WIN_V }}-${{ env.GCC_MINGW_WIN_V }}/${{ matrix.arch }}-${{ env.GCC_WIN_V }}-release-posix-$exception-ucrt-${{ env.GCC_MINGW_WIN_V }}.7z
             7z x gcc-mingw.7z
-            $path = (Get-ChildItem -Directory -Filter 'mingw*' | Select-Object -First 1).FullName
-          }
-
-          if ("${{ matrix.script }}" -eq "sh") {
-            $path = $path -replace '^([A-Za-z]):', '/$1' -replace '\\', '/'
-          }
-          echo "MINGW_ROOT=$path" >> $env:GITHUB_ENV
+            rm -f gcc-mingw.7z
+            mingw_path=$(realpath mingw*)
+          fi
+          if [ "${{ matrix.script }}" = "bat" ]; then
+            mingw_path="$(cygpath -d $mingw_path)"
+          fi
+          echo "MINGW_ROOT=$mingw_path" >> $GITHUB_ENV
 
       - name: Clone the repo
-        shell: pwsh
+        shell: bash
         run: |
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
-          git cherry-pick --no-commit $env:PR336_COMMIT
+          git cherry-pick --no-commit $PR336_COMMIT
 
       - name: Build via scripts/mingw.sh
         if: matrix.script == 'sh'
@@ -196,10 +196,10 @@ jobs:
 
       - name: Build via win/mingw-build.bat
         if: matrix.script == 'bat'
-        shell: pwsh
+        shell: bash
         run: |
           cd curl-impersonate
-          .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
+          ./win/mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$MINGW_ROOT"
 
       - name: Create the static lib
         shell: bash
@@ -233,7 +233,7 @@ jobs:
           "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-${{ matrix.toolchain }}" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -static -o packages/lib/cpp_s.exe
 
       - name: Make tarball
-        shell: pwsh
+        shell: bash
         run: |
           cd curl-impersonate
           tar -C packages -czf curl-impersonate.tgz .
