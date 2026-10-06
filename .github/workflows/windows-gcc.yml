@@ -1,4 +1,4 @@
-name: "Build with LLVM/MinGW-w64 and test"
+name: "Build with GCC/MinGW-w64 and test"
 
 on:
   workflow_dispatch:
@@ -6,7 +6,10 @@ on:
 permissions: {}
 
 env:
-  LLVM_MINGW_V: "20260922"
+  GCC_MINGW_V: "gcc-16"
+  GCC_WIN_V: "16.2.0"
+  GCC_MINGW_WIN_V: "rt_v14-rev1"
+  PR336_COMMIT: 190caf97aec24cff22bad563ee26e873c8cc07c5
 
 jobs:
   build:
@@ -14,9 +17,9 @@ jobs:
     runs-on: ubuntu-26.04
     strategy:
       matrix:
-        arch: [x86_64, i686, aarch64, armv7]
+        arch: [x86_64, i686]
     env:
-      MINGW_TOOLCHAIN: "clang"
+      MINGW_TOOLCHAIN: "gcc"
       MINGW_ARCH: "${{ matrix.arch }}"
     steps:
       - name: Check out the repo
@@ -28,24 +31,23 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install make cmake ninja-build curl xz-utils git
-          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
-            sudo dpkg --add-architecture i386
-            sudo apt-get update
-            sudo apt-get install nasm wine wine64 wine32 patch
-          fi
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install nasm wine wine64 wine32 patch
 
       - name: Install MinGW toolchain
         run: |
-          curl -fsSL -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-ubuntu-22.04-x86_64.tar.xz
-          sudo mkdir -p /opt/llvm-mingw
-          sudo tar -xJf llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm-mingw
-          echo "MINGW_ROOT=/opt/llvm-mingw" >> "$GITHUB_ENV"
+          curl -fsSL -o gcc-mingw.tar.xz https://github.com/AmanoTeam/mingw-gcc-cross/releases/download/${{ env.GCC_MINGW_V }}/x86_64-unknown-linux-gnu.tar.xz
+          sudo mkdir -p /opt/gcc-mingw
+          sudo tar -xJf gcc-mingw.tar.xz --strip-components=1 -C /opt/gcc-mingw
+          echo "MINGW_ROOT=/opt/gcc-mingw" >> "$GITHUB_ENV"
 
       - name: Clone the repo
         run: |
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
+          git cherry-pick --no-commit ${{ env.PR336_COMMIT }}
 
       - name: Build
         run: |
@@ -53,9 +55,7 @@ jobs:
           export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./install"
           export USE_WINE=1
           ./scripts/mingw.sh build
-          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
-            ./scripts/mingw.sh checkbuild
-          fi
+          ./scripts/mingw.sh checkbuild
           ./scripts/mingw.sh install-strip
 
       - name: Create the static lib
@@ -74,17 +74,17 @@ jobs:
               echo "ADDLIB $lib"
             done
             echo "SAVE"
-          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
+          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-gcc-ar" -M
           rm -f $depslib_list *.orig
 
       - name: Build a sample program
         run: |
           cd curl-impersonate
           cp ${{ github.workspace }}/sample.* .
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang" -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -x c -DCURL_STATICLIB -I./install/include sample.c -L./install/lib -static -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -o install/lib/c_s.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -DCURL_STATICLIB -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -static -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -o install/lib/cpp_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-gcc" -I./install/include sample.c -L./install/lib -lcurl-impersonate -o install/lib/c_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -o install/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -x c -DCURL_STATICLIB -I./install/include sample.c -L./install/lib -static -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -o install/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -DCURL_STATICLIB -I./install/include sample.cpp -L./install/lib -lcurl-impersonate -static -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -o install/lib/cpp_s.exe
 
       - name: Make tarball
         run: |
@@ -92,7 +92,6 @@ jobs:
           tar -C install -czf "curl-impersonate.tgz" .
 
       - name: Upload artifact
-        if: ${{ matrix.arch != 'armv7' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts.ubuntu.${{ matrix.arch }}
@@ -103,10 +102,10 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [x86_64, i686, aarch64, armv7]
+        arch: [x86_64, i686]
         script: [sh, bat]
     env:
-      MINGW_TOOLCHAIN: "clang"
+      MINGW_TOOLCHAIN: "gcc"
       MINGW_ARCH: "${{ matrix.arch }}"
     steps:
       - name: Check out the repo
@@ -120,19 +119,22 @@ jobs:
           if [ "${{ matrix.script }}" = "sh" ]; then
             choco install make
           fi
-          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
-            choco install nasm
-          fi
+          choco install nasm
 
       - name: Install MinGW toolchain
         shell: bash
         run: |
           mkdir toolchain
           cd toolchain
-          curl -fsSL -o llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_V }}/llvm-mingw-${{ env.LLVM_MINGW_V }}-ucrt-x86_64.zip
-          7z x llvm-mingw.zip
-          rm -f llvm-mingw.zip
-          mingw_path=$(realpath llvm-mingw-*)
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            exception="seh"
+          elif [ "${{ matrix.arch }}" = "i686" ]; then
+            exception="dwarf"
+          fi
+          curl -fsSL -o gcc-mingw.7z https://github.com/niXman/mingw-builds-binaries/releases/download/${{ env.GCC_WIN_V }}-${{ env.GCC_MINGW_WIN_V }}/${{ matrix.arch }}-${{ env.GCC_WIN_V }}-release-posix-$exception-ucrt-${{ env.GCC_MINGW_WIN_V }}.7z
+          7z x gcc-mingw.7z
+          rm -f gcc-mingw.7z
+          mingw_path=$(realpath mingw*)
           if [ "${{ matrix.script }}" = "bat" ]; then
             mingw_path="$(cygpath -d $mingw_path)"
           fi
@@ -144,6 +146,7 @@ jobs:
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
           git switch feature/mingw
+          git cherry-pick --no-commit $PR336_COMMIT
 
       - name: Build
         shell: bash
@@ -152,12 +155,10 @@ jobs:
           if [ "${{ matrix.script }}" = "sh" ]; then
             export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
             ./scripts/mingw.sh build
-            if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
-              ./scripts/mingw.sh checkbuild
-            fi
+            ./scripts/mingw.sh checkbuild
             ./scripts/mingw.sh install-strip
           elif [ "${{ matrix.script }}" = "bat" ]; then
-            ./win/mingw-build.bat clang ${{ matrix.arch }} "$MINGW_ROOT"
+            ./win/mingw-build.bat gcc ${{ matrix.arch }} "$MINGW_ROOT"
           fi
 
       - name: Create the static lib
@@ -177,7 +178,7 @@ jobs:
               echo "ADDLIB $lib"
             done
             echo "SAVE"
-          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
+          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-gcc-ar" -M
           rm -f $depslib_list *.orig
 
       - name: Build a sample program
@@ -185,10 +186,10 @@ jobs:
         run: |
           cd curl-impersonate
           cp "$GITHUB_WORKSPACE"/sample.* .
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -o packages/lib/cpp_d.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -DCURL_STATICLIB -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -static -o packages/lib/c_s.exe
-          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-clang++" -DCURL_STATICLIB -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -static -o packages/lib/cpp_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-gcc" -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -o packages/lib/c_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -o packages/lib/cpp_d.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -DCURL_STATICLIB -I./packages/include sample.c -L./packages/lib -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -static -o packages/lib/c_s.exe
+          "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-g++" -DCURL_STATICLIB -I./packages/include sample.cpp -L./packages/lib -lcurl-impersonate -lpthread -lnormaliz -lbcrypt -lcrypt32 -lws2_32 -liphlpapi -lkernel32 -ladvapi32 -static -o packages/lib/cpp_s.exe
 
       - name: Make tarball
         shell: bash
@@ -197,7 +198,6 @@ jobs:
           tar -C packages -czf curl-impersonate.tgz .
 
       - name: Upload artifact
-        if: ${{ matrix.arch != 'armv7' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts.windows-${{ matrix.script }}.${{ matrix.arch }}
@@ -206,37 +206,22 @@ jobs:
   test:
     name: Test (${{ matrix.built_on }}, ${{ matrix.arch }})
     needs: [build, build-w]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     strategy:
       matrix:
         include:
           - built_on: ubuntu
             arch: x86_64
-            os: windows-latest
           - built_on: ubuntu
             arch: i686
-            os: windows-latest
-          - built_on: ubuntu
-            arch: aarch64
-            os: windows-11-arm
           - built_on: windows-bat
             arch: x86_64
-            os: windows-latest
           - built_on: windows-sh
             arch: x86_64
-            os: windows-latest
           - built_on: windows-bat
             arch: i686
-            os: windows-latest
           - built_on: windows-sh
             arch: i686
-            os: windows-latest
-          - built_on: windows-bat
-            arch: aarch64
-            os: windows-11-arm
-          - built_on: windows-sh
-            arch: aarch64
-            os: windows-11-arm
     steps:
       - name: Check out the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -289,3 +274,4 @@ jobs:
             --method DELETE \
             "/repos/${{ github.repository }}/actions/artifacts/$id"
           done
+
