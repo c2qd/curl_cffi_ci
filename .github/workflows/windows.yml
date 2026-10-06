@@ -182,24 +182,20 @@ jobs:
           git switch feature/mingw
           git cherry-pick --no-commit $PR336_COMMIT
 
-      - name: Build via scripts/mingw.sh
-        if: matrix.script == 'sh'
+      - name: Build
         shell: bash
         run: |
           cd curl-impersonate
-          export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
-          ./scripts/mingw.sh build
-          if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
-            ./scripts/mingw.sh checkbuild
+          if [ "${{ matrix.script }}" = "sh" ]; then
+            export CMAKE_CONFIGURE_ARGS="-DCMAKE_INSTALL_PREFIX=./packages"
+            ./scripts/mingw.sh build
+            if [ "${{ matrix.arch }}" = "x86_64" ] || [ "${{ matrix.arch }}" = "i686" ]; then
+              ./scripts/mingw.sh checkbuild
+            fi
+            ./scripts/mingw.sh install-strip
+          elif [ "${{ matrix.script }}" = "bat" ]; then
+            ./win/mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$MINGW_ROOT"
           fi
-          ./scripts/mingw.sh install-strip
-
-      - name: Build via win/mingw-build.bat
-        if: matrix.script == 'bat'
-        shell: bash
-        run: |
-          cd curl-impersonate
-          ./win/mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$MINGW_ROOT"
 
       - name: Create the static lib
         shell: bash
