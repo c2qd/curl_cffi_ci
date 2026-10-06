@@ -205,7 +205,7 @@ jobs:
           for lib in $depslib_list; do
             cp "build/deps/install/lib/$lib" install/lib
           done
-          cd install/lib
+          cd packages/lib
           mv libcurl-impersonate.a{,.orig}
           {
             echo "CREATE libcurl-impersonate.a"
