@@ -11,21 +11,21 @@ int main(void)
     {
         return 1;
     }
-    CURLcode rc = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if(rc == CURLE_OK)
+    CURLcode retcode = curl_easy_setopt(curl, CURLOPT_URL, url);
+    if(retcode == CURLE_OK)
     {
-        rc = curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+        retcode = curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     }
-    if(rc == CURLE_OK)
+    if(retcode == CURLE_OK)
     {
-        rc = curl_easy_impersonate(curl, profile, default_headers);
+        retcode = curl_easy_impersonate(curl, profile, default_headers);
     }
-    if(rc == CURLE_OK)
+    if(retcode == CURLE_OK)
     {
-        rc = curl_easy_perform(curl);
+        retcode = curl_easy_perform(curl);
     }
     curl_easy_cleanup(curl);
-    if(rc != CURLE_OK)
+    if(retcode != CURLE_OK)
     {
         return 1;
     }
