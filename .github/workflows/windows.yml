@@ -214,7 +214,7 @@ jobs:
               echo "ADDLIB $lib"
             done
             echo "SAVE"
-          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-ar" -M
+          } | "${MINGW_ROOT}/bin/${{ matrix.arch }}-w64-mingw32-*ar" -M
           rm -f $depslib_list *.orig
 
       - name: Build a sample program
