@@ -202,6 +202,7 @@ jobs:
           .\win\mingw-build.bat ${{ matrix.toolchain }} ${{ matrix.arch }} "$env:MINGW_ROOT"
 
       - name: Create the static lib
+        shell: bash
         run: |
           depslib_list="libcares.a libzlibstatic.a libzstd.a libbrotlidec.a libbrotlicommon.a libbrotlienc.a libnghttp2.a libnghttp3.a libngtcp2_crypto_boringssl.a libssl.a libcrypto.a"
           cd curl-impersonate
