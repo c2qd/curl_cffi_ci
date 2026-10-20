@@ -6,10 +6,10 @@ on:
 permissions: {}
 
 env:
-  REV: 5
+  REV: 4
   CURL_IMPERSONATE_VERSION: 2.2.3
   CURL_CFFI_VERSION: 0.16.4b1
-  OPENBSD: 7.9
+  OPENBSD: 8.0
 
 jobs:
   build-test:
