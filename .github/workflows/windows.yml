@@ -45,7 +45,7 @@ jobs:
         run: |
           git clone https://github.com/c2qd/curl-impersonate.git
           cd curl-impersonate
-          git switch feature/mingw
+          git switch chore/upd_deps
 
       - name: Build
         run: |
