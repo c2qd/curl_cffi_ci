@@ -1,5 +1,9 @@
 # curl_cffi_ci
 
+## Announce
+
+OpenBSD support was introduced in curl_cffi 0.17.0b1, so there is no longer any reason to maintain this repository.
+
 ## ?
 
 Build curl-impersonate & curl_cffi on OpenBSD (CI)  

@@ -7,7 +7,7 @@ permissions: {}
 
 env:
   MATURIN_OPENSSL_SYS_VERSION: 0.9.116
-  CRYPTOGRAPHY_OPENSSL_SYS_VERSION: 0.9.110
+  CRYPTOGRAPHY_OPENSSL_SYS_VERSION: 0.9.117
 
 jobs:
   build:
@@ -54,7 +54,7 @@ jobs:
             . .venv/bin/activate
             python3 -m pip install --upgrade pip
             python3 -m pip install wheel build
-            python3 -m pip download --no-binary maturin --no-binary cryptography maturin "cryptography>=46.0.4,<47.0"
+            python3 -m pip download --no-binary maturin --no-binary cryptography maturin "cryptography>=46.0.4,<51.0"
             tar -s "|^maturin-[0-9][0-9.]*/|maturin/|" -xzf maturin-*.tar.gz
             tar -s "|^cryptography-[0-9][0-9.]*/|cryptography/|" -xzf cryptography-*.tar.gz
             rm -f maturin-*.tar.gz cryptography-*.tar.gz

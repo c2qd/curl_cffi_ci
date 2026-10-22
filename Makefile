@@ -1,5 +1,5 @@
-CURL_IMPERSONATE_VERSION =			2.2.3
-CURL_CFFI_VERSION =					0.16.4b1
+CURL_IMPERSONATE_VERSION =			2.3.0
+CURL_CFFI_VERSION =					0.17.0b2
 
 _CURL_IMPERSONATE_URL=				https://github.com/lexiforest/curl-impersonate/archive/refs/tags/v${CURL_IMPERSONATE_VERSION}.tar.gz
 _CURL_CFFI_URL =					https://files.pythonhosted.org/packages/source/c/curl_cffi/curl_cffi-${CURL_CFFI_VERSION}.tar.gz
@@ -72,7 +72,6 @@ all: build
 init: ${_INIT_COOKIE}
 fetch: ${_FETCH_COOKIE}
 extract: ${_EXTRACT_COOKIE}
-patch: ${_PATCH_COOKIE}
 configure: ${_CONFIGURE_COOKIE}
 build: ${_BUILD_COOKIE}
 clean:
@@ -114,14 +113,7 @@ ${_EXTRACT_COOKIE}: ${_FETCH_COOKIE}
 .endif
 	@${_MAKE_COOKIE} $@
 
-${_PATCH_COOKIE}: ${_EXTRACT_COOKIE}
-.if ${ENABLE_CURL_CFFI:L} == "yes"
-	@cd ${_CURL_CFFI_DEST} && \
-		${_PATCH} < ${.CURDIR}/curl_cffi.patch
-.endif
-	@${_MAKE_COOKIE} $@
-
-${_CONFIGURE_COOKIE}: ${_PATCH_COOKIE}
+${_CONFIGURE_COOKIE}: ${_EXTRACT_COOKIE}
 	@cd ${_CURL_IMPERSONATE_DEST} && \
 		${_SETENV} ${CURL_IMPERSONATE_MAKE_ENV} \
 		${GMAKE} configure
