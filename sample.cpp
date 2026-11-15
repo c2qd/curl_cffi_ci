@@ -1,35 +1,47 @@
 #include <curl/curl.h>
 
+#include <iostream>
 #include <memory>
+#include <print>
+#include <string>
 
 namespace
 {
-    const char *url = "https://kittens.sh/api/clean";
-    const char *profile = "chrome150";
-    const int default_headers = 1;
-    using CurlPtr = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;
+    void output_error(const CURLcode &error_code)
+    {
+        std::println(std::cerr, "curl: {}", curl_easy_strerror(error_code));
+    }
 } // namespace
 
 int main()
 {
-    CurlPtr curl(curl_easy_init(), &curl_easy_cleanup);
-    if(curl == nullptr)
+    const std::string url = "https://fp.impersonate.pro/api/auto";
+    const std::string profile = "chrome150";
+    constexpr int default_headers = 1;
+
+    std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl(curl_easy_init(), &curl_easy_cleanup);
+    if(!curl)
     {
         return 1;
     }
-    CURLcode retcode = curl_easy_setopt(curl.get(), CURLOPT_URL, url);
-    if(retcode == CURLE_OK)
+    if(CURLcode ret = curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str()); ret != CURLE_OK)
     {
-        retcode = curl_easy_setopt(curl.get(), CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+        output_error(ret);
+        return 1;
     }
-    if(retcode == CURLE_OK)
+    if(CURLcode ret = curl_easy_setopt(curl.get(), CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA); ret != CURLE_OK)
     {
-        retcode = curl_easy_impersonate(curl.get(), profile, default_headers);
+        output_error(ret);
+        return 1;
     }
-    if(retcode == CURLE_OK)
+    if(CURLcode ret = curl_easy_impersonate(curl.get(), profile.c_str(), default_headers); ret != CURLE_OK)
     {
-        retcode = curl_easy_perform(curl.get());
+        output_error(ret);
+        return 1;
     }
-
-    return retcode == CURLE_OK ? 0 : 1;
+    if(CURLcode ret = curl_easy_perform(curl.get()); ret != CURLE_OK)
+    {
+        output_error(ret);
+        return 1;
+    }
 }
